@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Copy, QrCode, Plus, LinkIcon, TrendingUp, Users, Eye, Edit } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,9 +9,78 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { toast } from "@/hooks/use-toast"
+import type { Link as LinkType } from "@/lib/db"
 
 export default function LinksPage() {
+  const [links, setLinks] = useState<LinkType[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [balanceVisible, setBalanceVisible] = useState(true)
+
+  /* ---------- New link form state ---------- */
+
+  const [name, setName] = useState("")
+  const [description, setDescription] = useState("")
+  const [amount, setAmount] = useState("")
+  const [currency, setCurrency] = useState("USDC")
+
+  /* ---------- Data helpers ---------- */
+
+  const refresh = async () => {
+    setIsLoading(true)
+    const res = await fetch("/api/links")
+    const data = await res.json()
+    setLinks(data.links)
+    setIsLoading(false)
+  }
+
+  useEffect(() => {
+    refresh()
+  }, [])
+
+  const totalEarnings = links.reduce((sum, l) => sum + (l.earnings || 0), 0)
+  const totalTx = links.reduce((sum, l) => sum + (l.transactions || 0), 0)
+
+  const handleCreate = async () => {
+    if (!name.trim()) {
+      toast({ title: "Name required" })
+      return
+    }
+    const res = await fetch("/api/links", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name,
+        description,
+        amount: amount ? Number(amount) : undefined,
+        currency,
+      }),
+    })
+    if (res.ok) {
+      toast({ title: "Link created" })
+      setName("")
+      setDescription("")
+      setAmount("")
+      setCurrency("USDC")
+      refresh()
+    } else {
+      const err = await res.json()
+      toast({ title: "Error", description: err.error || "Unable to create link" })
+    }
+  }
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text)
+    toast({ title: "Copied", description: text })
+  }
+
+  if (isLoading) {
+    return (
+      <div className="pt-20 pb-8 min-h-screen flex items-center justify-center">
+        <p className="text-xl text-gray-600">Loading links...</p>
+      </div>
+    )
+  }
 
   return (
     <div className="pt-20 pb-8">
@@ -23,7 +92,10 @@ export default function LinksPage() {
               <h1 className="text-4xl font-bold text-gray-900 mb-2">Payment Links</h1>
               <p className="text-xl text-gray-600">Create and manage your payment links</p>
             </div>
-            <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white">
+            <Button
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
+              onClick={() => document.getElementById("new-link-form")?.scrollIntoView({ behavior: "smooth" })}
+            >
               <Plus className="w-4 h-4 mr-2" />
               Create New Link
             </Button>
@@ -38,9 +110,9 @@ export default function LinksPage() {
                 <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg">
                   <LinkIcon className="w-6 h-6 text-white" />
                 </div>
-                <span className="text-sm text-green-600 font-medium">3 Active</span>
+                <span className="text-sm text-green-600 font-medium">{links.length} Active</span>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-1">3</h3>
+              <h3 className="text-2xl font-bold text-gray-900 mb-1">{links.length}</h3>
               <p className="text-gray-600 text-sm">Total Links</p>
             </CardContent>
           </Card>
@@ -51,9 +123,13 @@ export default function LinksPage() {
                 <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-teal-500 rounded-xl flex items-center justify-center shadow-lg">
                   <TrendingUp className="w-6 h-6 text-white" />
                 </div>
-                <span className="text-sm text-green-600 font-medium">+24%</span>
+                <span className="text-sm text-green-600 font-medium">
+                  {totalEarnings > 0 ? "+24%" : "0%"}
+                </span>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-1">{balanceVisible ? "$2,847.50" : "••••••"}</h3>
+              <h3 className="text-2xl font-bold text-gray-900 mb-1">
+                {balanceVisible ? `$${totalEarnings.toFixed(2)}` : "••••••"}
+              </h3>
               <p className="text-gray-600 text-sm">Total Earnings</p>
             </CardContent>
           </Card>
@@ -64,9 +140,9 @@ export default function LinksPage() {
                 <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg">
                   <Users className="w-6 h-6 text-white" />
                 </div>
-                <span className="text-sm text-green-600 font-medium">+12</span>
+                <span className="text-sm text-green-600 font-medium">+{totalTx}</span>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-1">43</h3>
+              <h3 className="text-2xl font-bold text-gray-900 mb-1">{totalTx}</h3>
               <p className="text-gray-600 text-sm">Total Transactions</p>
             </CardContent>
           </Card>
@@ -80,37 +156,9 @@ export default function LinksPage() {
                 <CardTitle className="text-2xl text-gray-900">Your Payment Links</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {[
-                  {
-                    name: "General Services",
-                    url: "authora.xyz/@creator",
-                    earnings: "$1,247.50",
-                    transactions: 23,
-                    status: "Active",
-                    created: "2 weeks ago",
-                    description: "General freelance services and consultations",
-                  },
-                  {
-                    name: "Design Projects",
-                    url: "authora.xyz/@creator/design",
-                    earnings: "$875.00",
-                    transactions: 12,
-                    status: "Active",
-                    created: "1 week ago",
-                    description: "UI/UX design and branding services",
-                  },
-                  {
-                    name: "Consulting",
-                    url: "authora.xyz/@creator/consulting",
-                    earnings: "$725.00",
-                    transactions: 8,
-                    status: "Paused",
-                    created: "3 days ago",
-                    description: "Business strategy and technical consulting",
-                  },
-                ].map((link, index) => (
+                {links.map((link) => (
                   <Card
-                    key={index}
+                    key={link.id}
                     className="bg-white/20 border-white/30 hover:bg-white/30 transition-all duration-300"
                   >
                     <CardHeader>
@@ -135,19 +183,24 @@ export default function LinksPage() {
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <p className="text-sm text-gray-600">Total Earnings</p>
-                          <p className="text-lg font-bold text-gray-900">{balanceVisible ? link.earnings : "••••••"}</p>
+                          <p className="text-lg font-bold text-gray-900">
+                            {balanceVisible ? `$${link.earnings.toFixed(2)}` : "••••••"}
+                          </p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-600">Transactions</p>
                           <p className="text-lg font-bold text-gray-900">{link.transactions}</p>
                         </div>
                       </div>
-                      <p className="text-sm text-gray-500">Created {link.created}</p>
+                      <p className="text-sm text-gray-500">
+                        Created {new Date(link.created).toLocaleDateString()}
+                      </p>
                       <div className="flex space-x-2">
                         <Button
                           variant="outline"
                           size="sm"
                           className="flex-1 border-gray-200 text-gray-700 hover:bg-gray-50"
+                          onClick={() => copyToClipboard(link.url)}
                         >
                           <Copy className="w-4 h-4 mr-2" />
                           Copy
@@ -156,6 +209,7 @@ export default function LinksPage() {
                           variant="outline"
                           size="sm"
                           className="flex-1 border-gray-200 text-gray-700 hover:bg-gray-50"
+                          onClick={() => copyToClipboard(link.url)}
                         >
                           <QrCode className="w-4 h-4 mr-2" />
                           QR Code
@@ -175,12 +229,16 @@ export default function LinksPage() {
                     </CardContent>
                   </Card>
                 ))}
+
+                {links.length === 0 && (
+                  <p className="text-center text-gray-600 py-8">No links yet – create one to get started!</p>
+                )}
               </CardContent>
             </Card>
           </div>
 
           {/* Create New Link Form */}
-          <div className="space-y-6">
+          <div className="space-y-6" id="new-link-form">
             <Card className="bg-white/10 backdrop-blur-xl border-white/20 shadow-2xl">
               <CardHeader>
                 <CardTitle className="text-xl text-gray-900">Create New Link</CardTitle>
@@ -194,6 +252,8 @@ export default function LinksPage() {
                     id="link-name"
                     placeholder="e.g., Design Services"
                     className="mt-2 bg-white/50 border-gray-200"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
                   />
                 </div>
                 <div>
@@ -205,30 +265,42 @@ export default function LinksPage() {
                     placeholder="Describe what you're offering..."
                     className="mt-2 bg-white/50 border-gray-200"
                     rows={3}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
                   />
                 </div>
                 <div>
                   <Label htmlFor="link-amount" className="text-gray-700 font-medium">
                     Amount (Optional)
                   </Label>
-                  <Input id="link-amount" placeholder="e.g., $100" className="mt-2 bg-white/50 border-gray-200" />
+                  <Input
+                    id="link-amount"
+                    placeholder="e.g., 100"
+                    className="mt-2 bg-white/50 border-gray-200"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="link-currency" className="text-gray-700 font-medium">
                     Preferred Currency
                   </Label>
-                  <Select>
+                  <Select value={currency} onValueChange={setCurrency}>
                     <SelectTrigger className="mt-2 bg-white/50 border-gray-200">
                       <SelectValue placeholder="Select currency" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="usdc">USDC</SelectItem>
-                      <SelectItem value="eth">ETH</SelectItem>
-                      <SelectItem value="sol">SOL</SelectItem>
+                      <SelectItem value="USDC">USDC</SelectItem>
+                      <SelectItem value="ETH">ETH</SelectItem>
+                      <SelectItem value="SOL">SOL</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                <Button className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white">
+                <Button
+                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
+                  onClick={handleCreate}
+                  disabled={!name.trim()}
+                >
                   <Plus className="w-4 h-4 mr-2" />
                   Create Link
                 </Button>

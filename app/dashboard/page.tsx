@@ -1,7 +1,7 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
-import { useUser } from '@civic/auth-web3/react';
+import { useEffect, useState, useMemo } from "react"
+import { useUser } from "@civic/auth-web3/react"
 import {
   ArrowUpRight,
   ArrowDownLeft,
@@ -21,6 +21,7 @@ import {
   BarChart3,
   Users,
   LinkIcon,
+  Clock,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -32,54 +33,41 @@ import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import WalletActions from "@/components/wallet-actions"
 
 export default function DashboardPage() {
-  const civicAuth = useUser();
-  const { user, isLoading, error: authError } = civicAuth;
-  const [balanceVisible, setBalanceVisible] = useState(true);
+  const civicAuth = useUser()
+  const { user, isLoading, error: authError } = civicAuth
+
+  const [balanceVisible, setBalanceVisible] = useState(true)
   const [notifications, setNotifications] = useState(true)
   const [autoRefresh, setAutoRefresh] = useState(true)
 
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState("")
+  const [email, setEmail] = useState("")
   const [bio, setBio] = useState("Digital creator & freelancer")
   const [currency, setCurrency] = useState("usd")
-  const [timezone, setTimezone] = useState("pht");
-  const ethAddress = (civicAuth as any).ethereum?.address;
-  const solAddress = (civicAuth as any).solana?.address; // Also capture Solana address if needed later
+  const [timezone, setTimezone] = useState("pht")
+
+  const ethAddress = (civicAuth as any).ethereum?.address
 
   useEffect(() => {
     if (user) {
-      setUsername(user.name || '');
-      setEmail(user.email || '');
-      // You could also set other user-dependent states here
+      setUsername(user.name || "")
+      setEmail(user.email || "")
     }
-  }, [user]); // This effect runs when the `user` object changes
+  }, [user])
 
-  useEffect(() => {
-    const button = document.getElementById('wallet-tab-copy-button');
-    if (button) {
-      const handleClick = () => {
-        console.log('VANILLA JS CLICK LISTENER FIRED for wallet-tab-copy-button! ethAddress:', (civicAuth as any).ethereum?.address);
-      };
-      button.addEventListener('click', handleClick);
-      console.log('Vanilla JS event listener attached to wallet-tab-copy-button');
-      return () => {
-        button.removeEventListener('click', handleClick);
-        console.log('Vanilla JS event listener removed from wallet-tab-copy-button');
-      };
-    } else {
-      console.warn('Could not find wallet-tab-copy-button to attach vanilla listener');
-    }
-  }, [civicAuth]); // Re-run if civicAuth changes, though address is read directly
+  /* ------------------------------------------------------------------
+   *  Remove auto‑sign‑in loop – CivicAuthProvider will restore session
+   * -----------------------------------------------------------------*/
 
   if (isLoading) {
     return (
       <div className="pt-20 pb-8 min-h-screen flex items-center justify-center">
         <p className="text-xl text-gray-600">Loading dashboard...</p>
-        {/* TODO: Add a spinner component */}
       </div>
-    );
+    )
   }
 
   if (authError) {
@@ -87,24 +75,44 @@ export default function DashboardPage() {
       <div className="pt-20 pb-8 min-h-screen flex flex-col items-center justify-center">
         <p className="text-xl text-red-600">Error loading user data:</p>
         <p className="text-gray-700">{authError.message}</p>
-        {/* TODO: Add a retry button or link to login */}
       </div>
-    );
+    )
   }
 
   if (!user) {
-    // This case should ideally be handled by middleware redirecting to login
-    // but as a fallback:
     return (
       <div className="pt-20 pb-8 min-h-screen flex items-center justify-center">
-        <p className="text-xl text-gray-600">Please log in to view the dashboard.</p>
-        {/* Optionally, include the AuthButton here or a link to login */}
+        <p className="text-xl text-gray-600">Please sign in to continue.</p>
       </div>
-    );
+    )
   }
 
-  // Log the full result from the useUser() hook
-  console.log('Civic useUser() Hook Result:', civicAuth);
+  /* ----------------------------------------------
+   *  Shared transaction data for WalletActions
+   * ---------------------------------------------*/
+  const walletTransactions = useMemo(
+    () => [
+      {
+        hash: "0x1234...5678",
+        amount: "+$125.00",
+        token: "USDC",
+        timestamp: "2 hours ago",
+      },
+      {
+        hash: "0x2345...6789",
+        amount: "+$75.50",
+        token: "ETH",
+        timestamp: "1 day ago",
+      },
+      {
+        hash: "0x3456...7890",
+        amount: "-$25.00",
+        token: "USDC",
+        timestamp: "2 days ago",
+      },
+    ],
+    [],
+  )
 
   return (
     <div className="pt-20 pb-8">
@@ -155,8 +163,8 @@ export default function DashboardPage() {
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-8">
-            {/* Stats Grid */}
-            <div className="grid md:grid-cols-4 gap-6">
+
+<div className="grid md:grid-cols-4 gap-6">
               {[
                 {
                   title: "Total Balance",
