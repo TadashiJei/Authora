@@ -1,4 +1,5 @@
 import { FileText, Scale, AlertTriangle, Calendar } from "lucide-react"
+import { SITE_DOMAIN } from "@/lib/utils"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"

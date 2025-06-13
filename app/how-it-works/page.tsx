@@ -1,4 +1,5 @@
 import { ArrowRight, Shield, Wallet, Link, BarChart3, CheckCircle, Sparkles, Zap } from "lucide-react"
+import { SITE_DOMAIN } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -67,8 +68,7 @@ export default function HowItWorksPage() {
               {
                 step: "03",
                 title: "Share Your Payment Link",
-                description:
-                  "Get your personalized payment page at authora.xyz/@yourname. Share it anywhere to start receiving crypto payments.",
+description: `Get your personalized payment page at ${SITE_DOMAIN}/@yourname. Share it anywhere to start receiving crypto payments.`,
                 features: [
                   "Custom payment page",
                   "QR code generation",

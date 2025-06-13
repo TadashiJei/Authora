@@ -10,6 +10,21 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
+ * Site base URL and host helpers.
+ */
+export const BASE_URL =
+  process.env.NEXT_PUBLIC_BASE_URL ||
+  (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000")
+
+export const SITE_DOMAIN = (() => {
+  try {
+    return new URL(BASE_URL).host
+  } catch {
+    return BASE_URL.replace(/^https?:\/\//, "")
+  }
+})()
+
+/**
  * Decode a QR code from an image file and return the embedded text.
  */
 export async function decodeQrFromImage(file: File): Promise<string | null> {

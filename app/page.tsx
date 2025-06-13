@@ -1,4 +1,5 @@
 import { ArrowRight, Sparkles, Shield, Zap } from "lucide-react"
+import { SITE_DOMAIN } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -86,7 +87,7 @@ export default function HomePage() {
                       <div className="space-y-3">
                         <div className="flex items-center justify-between p-3 bg-white/50 rounded-lg">
                           <span className="text-sm text-gray-600">Payment Link</span>
-                          <span className="text-sm font-medium text-purple-600">authora.xyz/@you</span>
+                          <span className="text-sm font-medium text-purple-600">{`${SITE_DOMAIN}/@you`}</span>
                         </div>
                         <div className="flex items-center justify-between p-3 bg-white/50 rounded-lg">
                           <span className="text-sm text-gray-600">Recent Payment</span>

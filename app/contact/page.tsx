@@ -1,4 +1,5 @@
 import { Mail, Phone, MapPin, Send, Clock } from "lucide-react"
+import { SITE_DOMAIN } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -37,7 +38,7 @@ export default function ContactPage() {
                 icon: Mail,
                 title: "Email Us",
                 description: "Get in touch via email",
-                info: "support@authora.xyz",
+                info: `support@${SITE_DOMAIN}`,
                 action: "Send Email",
                 color: "from-blue-500 to-blue-600",
               },
@@ -101,7 +102,7 @@ export default function ContactPage() {
                     <Mail className="w-6 h-6 mr-4 mt-1" />
                     <div>
                       <p className="font-medium mb-1">Email</p>
-                      <p className="text-blue-100">support@authora.xyz</p>
+                      <p className="text-blue-100">{`support@${SITE_DOMAIN}`}</p>
                     </div>
                   </div>
 

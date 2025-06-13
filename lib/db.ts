@@ -111,3 +111,42 @@ export async function deleteLink(userId: string, id: string): Promise<boolean> {
   await writeLinks(filtered)
   return true
 }
+
+/* ---------- Notifications ---------- */
+
+export interface Notification {
+  id: string
+  userId: string
+  type: string
+  title: string
+  message: string
+  time: string
+  read: boolean
+}
+
+const notificationsFile = path.join(dataDir, "notifications.json")
+
+async function ensureNotificationsFile() {
+  await fs.mkdir(dataDir, { recursive: true })
+  try {
+    await fs.access(notificationsFile)
+  } catch {
+    await fs.writeFile(notificationsFile, "[]")
+  }
+}
+
+async function readNotifications(): Promise<Notification[]> {
+  await ensureNotificationsFile()
+  const raw = await fs.readFile(notificationsFile, "utf8")
+  return JSON.parse(raw) as Notification[]
+}
+
+/**
+ * Return notifications for a user sorted by newest first.
+ */
+export async function getNotificationsByUser(userId: string): Promise<Notification[]> {
+  const list = await readNotifications()
+  return list
+    .filter((n) => n.userId === userId)
+    .sort((a, b) => (a.time < b.time ? 1 : -1))
+}

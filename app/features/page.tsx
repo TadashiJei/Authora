@@ -1,4 +1,5 @@
 import { Check, ArrowRight, Shield, Wallet, LinkIcon, Zap, Globe, BarChart3, Lock } from "lucide-react"
+import { SITE_DOMAIN } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -233,7 +234,7 @@ export default function FeaturesPage() {
                     <div className="p-8">
                       <div className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg mb-4">
                         <span className="text-sm text-gray-600">Your Payment Link</span>
-                        <span className="text-sm font-medium text-blue-600">authora.xyz/@creator</span>
+                        <span className="text-sm font-medium text-blue-600">{`${SITE_DOMAIN}/@creator`}</span>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <Button variant="outline" className="border-gray-200 text-gray-700 hover:bg-gray-50">
