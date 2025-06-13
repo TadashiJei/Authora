@@ -47,8 +47,9 @@ async function fetchSolTxs(connection: import("@solana/web3.js").Connection, add
 
 /**
  * Return recent transactions for the active wallet (Ethereum or Solana).
+ * Pass "solana" to force Solana lookup; otherwise defaults to Ethereum.
  */
-export function useWalletTransactions() {
+export function useWalletTransactions(selectedChain?: string | null) {
   const { address: evmAddress } = useAccount()
   const { connection } = useConnection()
   const { publicKey } = useWallet()
@@ -59,15 +60,21 @@ export function useWalletTransactions() {
     async function load() {
       setLoading(true)
       try {
-        if (evmAddress) {
-          const apiKey = process.env.NEXT_PUBLIC_ETHERSCAN_API_KEY
-          const txs = await fetchEvmTxs(evmAddress, apiKey)
-          setTransactions(txs)
-        } else if (publicKey) {
-          const txs = await fetchSolTxs(connection, publicKey.toString())
-          setTransactions(txs)
+        if (selectedChain === "solana") {
+          if (publicKey) {
+            const txs = await fetchSolTxs(connection, publicKey.toString())
+            setTransactions(txs)
+          } else {
+            setTransactions([])
+          }
         } else {
-          setTransactions([])
+          if (evmAddress) {
+            const apiKey = process.env.NEXT_PUBLIC_ETHERSCAN_API_KEY
+            const txs = await fetchEvmTxs(evmAddress, apiKey)
+            setTransactions(txs)
+          } else {
+            setTransactions([])
+          }
         }
       } catch {
         setTransactions([])
@@ -76,7 +83,7 @@ export function useWalletTransactions() {
       }
     }
     load()
-  }, [evmAddress, publicKey, connection])
+  }, [evmAddress, publicKey, connection, selectedChain])
 
   return { transactions, loading }
 }

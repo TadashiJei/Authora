@@ -68,6 +68,27 @@ export async function copyText(value: string): Promise<boolean> {
 }
 
 /**
+ * Key under which the user's currently selected chain is persisted.
+ */
+export const SELECTED_CHAIN_KEY = "authora.selectedChain"
+
+/** Persist selected chain to localStorage */
+export function saveSelectedChain(id: string) {
+  try {
+    localStorage.setItem(SELECTED_CHAIN_KEY, id)
+  } catch {}
+}
+
+/** Load selected chain from localStorage */
+export function loadSelectedChain(): string | null {
+  try {
+    return localStorage.getItem(SELECTED_CHAIN_KEY)
+  } catch {
+    return null
+  }
+}
+
+/**
  * Export a 2‑D string array to CSV and trigger browser download.
  */
 export function exportCsv(filename: string, rows: string[][]) {

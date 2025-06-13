@@ -12,6 +12,11 @@ import { ChevronDown } from "lucide-react"
 import { useAccount, useDisconnect, useSwitchChain } from "wagmi"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { mainnet } from "viem/chains"
+import {
+  SELECTED_CHAIN_KEY,
+  saveSelectedChain,
+  loadSelectedChain,
+} from "@/lib/utils"
 
 type EvmChain = { id: number; name: string; short: string }
 type SolanaChain = { id: "solana"; name: string; short: string }
@@ -26,37 +31,22 @@ const SOLANA_CHAIN: SolanaChain = {
   short: "SOL",
 }
 
-const CHAINS: readonly (EvmChain | SolanaChain)[] = [...EVM_CHAINS, SOLANA_CHAIN]
-
-/* ---------- Persistent helpers ---------- */
-
-const LS_KEY = "authora.selectedChain"
-
-function saveSelected(id: string) {
-  try {
-    localStorage.setItem(LS_KEY, id)
-  } catch {}
-}
-
-function loadSelected(): string | null {
-  try {
-    return localStorage.getItem(LS_KEY)
-  } catch {
-    return null
-  }
-}
+const CHAINS: readonly (EvmChain | SolanaChain)[] = [
+  ...EVM_CHAINS,
+  SOLANA_CHAIN,
+]
 
 export default function ChainSelector() {
   const { chain } = useAccount()
   const { switchChain, isPending: switching } = useSwitchChain()
   const { disconnect } = useDisconnect()
   const pathname = usePathname()
-  const searchParams = useSearchParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   /* ---------- Determine current chain ---------- */
 
-  const queryChain = searchParams.get("chain") ?? loadSelected()
+  const queryChain = searchParams.get("chain") ?? loadSelectedChain()
 
   const current = useMemo(() => {
     if (queryChain === "solana") return SOLANA_CHAIN
@@ -70,7 +60,7 @@ export default function ChainSelector() {
       const p = new URLSearchParams(searchParams.toString())
       if (val) p.set("chain", val)
       else p.delete("chain")
-      saveSelected(val ?? "")
+      saveSelectedChain(val ?? "")
       router.replace(`${pathname}?${p.toString()}`)
     },
     [pathname, router, searchParams],
@@ -103,11 +93,7 @@ export default function ChainSelector() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="flex items-center space-x-1"
-        >
+        <Button variant="ghost" size="sm" className="flex items-center space-x-1">
           <span className="font-medium truncate">{current.short}</span>
           <ChevronDown className="w-4 h-4" />
         </Button>

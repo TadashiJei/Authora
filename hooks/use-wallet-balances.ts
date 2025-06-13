@@ -3,9 +3,7 @@
 import { useAccount, useBalance } from "wagmi"
 import { useEffect, useMemo, useState } from "react"
 import { useConnection, useWallet } from "@solana/wallet-adapter-react"
-import { PublicKey } from "@solana/web3.js"
 
-/** A single wallet balance row. */
 export interface WalletBalance {
   symbol: string
   formatted: string
@@ -34,17 +32,17 @@ async function fetchUsdPrice(id: string): Promise<number | undefined> {
 /* ---------- Hook ---------- */
 
 /**
- * Return real‑time wallet balances (native ETH/SOL) and their USD value.
- * Works for embedded Civic wallets on both Ethereum and Solana.
+ * Return real‑time wallet balances (native ETH or SOL) for the preferred chain.
+ * Pass "solana" to see SOL balances; omit or pass any other value for EVM balances.
  */
-export function useWalletBalances() {
+export function useWalletBalances(selectedChain?: string | null) {
   /* ----- Ethereum via wagmi ----- */
-  const { address: evmAddress, chain: evmChain } = useAccount()
+  const { address: evmAddress } = useAccount()
   const { data: evmBalance } = useBalance({
     address: evmAddress,
     watch: true,
     formatUnits: "ether",
-    enabled: !!evmAddress,
+    enabled: !!evmAddress && selectedChain !== "solana",
   })
 
   /* ----- Solana via wallet‑adapter ----- */
@@ -55,7 +53,7 @@ export function useWalletBalances() {
   useEffect(() => {
     let cancelled = false
     async function poll() {
-      if (!publicKey) {
+      if (!publicKey || selectedChain === "evm") {
         setSolLamports(null)
         return
       }
@@ -70,50 +68,58 @@ export function useWalletBalances() {
       cancelled = true
       clearInterval(id)
     }
-  }, [connection, publicKey])
+  }, [connection, publicKey, selectedChain])
 
   /* ----- USD prices ----- */
   const [ethUsd, setEthUsd] = useState<number | undefined>()
   const [solUsd, setSolUsd] = useState<number | undefined>()
 
   useEffect(() => {
-    if (evmBalance && ethUsd === undefined) {
+    if (evmBalance && ethUsd === undefined && selectedChain !== "solana") {
       fetchUsdPrice(COINGECKO_IDS.ethereum).then(setEthUsd)
     }
-  }, [evmBalance, ethUsd])
+  }, [evmBalance, ethUsd, selectedChain])
 
   useEffect(() => {
-    if (publicKey && solUsd === undefined) {
+    if (publicKey && solUsd === undefined && selectedChain === "solana") {
       fetchUsdPrice(COINGECKO_IDS.solana).then(setSolUsd)
     }
-  }, [publicKey, solUsd])
+  }, [publicKey, solUsd, selectedChain])
 
   /* ----- Assemble result ----- */
   const balances = useMemo<WalletBalance[]>(() => {
     const list: WalletBalance[] = []
-    if (evmBalance) {
-      list.push({
-        symbol: evmBalance.symbol,
-        formatted: evmBalance.formatted,
-        valueUsd:
-          ethUsd !== undefined ? Number(evmBalance.formatted) * ethUsd : undefined,
-      })
-    }
-    if (publicKey && solLamports !== null) {
-      const sol = Number(solLamports) / 1_000_000_000
-      list.push({
-        symbol: "SOL",
-        formatted: sol.toLocaleString(undefined, { maximumFractionDigits: 6 }),
-        valueUsd: solUsd !== undefined ? sol * solUsd : undefined,
-      })
+    if (selectedChain === "solana") {
+      if (publicKey && solLamports !== null) {
+        const sol = Number(solLamports) / 1_000_000_000
+        list.push({
+          symbol: "SOL",
+          formatted: sol.toLocaleString(undefined, { maximumFractionDigits: 6 }),
+          valueUsd: solUsd !== undefined ? sol * solUsd : undefined,
+        })
+      }
+    } else {
+      if (evmBalance) {
+        list.push({
+          symbol: evmBalance.symbol,
+          formatted: evmBalance.formatted,
+          valueUsd:
+            ethUsd !== undefined ? Number(evmBalance.formatted) * ethUsd : undefined,
+        })
+      }
     }
     return list
-  }, [evmBalance, publicKey, solLamports, ethUsd, solUsd])
+  }, [evmBalance, publicKey, solLamports, ethUsd, solUsd, selectedChain])
 
   const totalUsd = balances.reduce((s, b) => s + (b.valueUsd || 0), 0)
 
+  const address =
+    selectedChain === "solana"
+      ? publicKey?.toString()
+      : evmAddress || publicKey?.toString()
+
   return {
-    address: evmAddress || publicKey?.toString(),
+    address,
     balances,
     totalUsd,
   }

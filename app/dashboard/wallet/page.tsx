@@ -2,32 +2,38 @@
 
 import { useState } from "react"
 import {
-  Copy,
   Wallet as WalletIcon,
   Shield,
   RefreshCw,
   Eye,
   EyeOff,
+  Copy,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useWalletTransactions } from "@/hooks/use-wallet-transactions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import WalletActions from "@/components/wallet-actions"
+import { useSearchParams } from "next/navigation"
+import { SELECTED_CHAIN_KEY } from "@/lib/utils"
+import CopyButton from "@/components/copy-button"
 import { useWalletBalances } from "@/hooks/use-wallet-balances"
-import { toast } from "@/hooks/use-toast"
+import { useWalletTransactions } from "@/hooks/use-wallet-transactions"
 
 export default function WalletPage() {
   const [balanceVisible, setBalanceVisible] = useState(true)
-  const { address, balances, totalUsd } = useWalletBalances()
-  const { transactions, loading: loadingTx } = useWalletTransactions()
 
-  const copyAddress = () => {
-    if (address) {
-      navigator.clipboard.writeText(address)
-      toast({ title: "Address copied", description: address })
-    }
-  }
+  /* ---------- Determine selected chain ---------- */
+  const searchParams = useSearchParams()
+  const selectedChain =
+    searchParams.get("chain") ??
+    (typeof window !== "undefined"
+      ? localStorage.getItem(SELECTED_CHAIN_KEY)
+      : null)
+
+  const { address, balances, totalUsd } = useWalletBalances(selectedChain)
+  const { transactions, loading: loadingTx } = useWalletTransactions(
+    selectedChain,
+  )
 
   const formattedTotal =
     totalUsd > 0
@@ -103,18 +109,22 @@ export default function WalletPage() {
                         className="font-mono text-sm truncate"
                         title={address || "No address"}
                       >
-                        {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "—"}
+                        {address
+                          ? `${address.slice(0, 6)}...${address.slice(-4)}`
+                          : "—"}
                       </p>
                       {address && (
-                        <Button
-                          onClick={copyAddress}
+                        <CopyButton
+                          value={address}
                           size="sm"
                           variant="outline"
                           className="bg-white/50 border-white/30 mt-2"
+                          toastTitle="Address Copied"
+                          toastDescription={address}
                         >
                           <Copy className="w-4 h-4 mr-2" />
                           Copy
-                        </Button>
+                        </CopyButton>
                       )}
                     </div>
                   </div>
@@ -188,7 +198,9 @@ export default function WalletPage() {
                         key={tx.hash}
                         className="flex items-center justify-between p-3 bg-white/20 rounded-lg font-mono text-xs truncate"
                       >
-                        <span className="truncate">{tx.hash.slice(0, 12)}…</span>
+                        <span className="truncate">
+                          {tx.hash.slice(0, 12)}…
+                        </span>
                         <span>
                           {tx.amount} {tx.token}
                         </span>
