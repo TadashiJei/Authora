@@ -80,67 +80,105 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Founder Section */}
+      {/* Founders Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Meet Our Founder</h2>
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">Meet Our Founders</h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Built by creators, for creators. Learn about the vision behind Authora.
+              The driving forces behind Authora's mission to simplify Web3 for everyone.
             </p>
           </div>
 
-          <Card className="bg-white/80 backdrop-blur-xl border-gray-100 shadow-2xl overflow-hidden">
-            <CardContent className="p-0">
-              <div className="grid lg:grid-cols-2">
-                <div className="relative">
-                  <img
-                    src="https://dafi.hacktivators.com/team/dev1.jpg?height=400&width=400"
-                    alt="Java Jay Bartolome"
-                    className="w-full h-96 lg:h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-                </div>
-
-                <div className="p-12">
-                  <div className="mb-6">
-                    <h3 className="text-3xl font-bold text-gray-900 mb-2">Java Jay Bartolome</h3>
-                    <p className="text-xl text-blue-600 font-medium mb-4">Founder & Developer</p>
-                    <Badge className="bg-gradient-to-r from-green-500 to-blue-500 text-white border-0">
-                      <Award className="w-3 h-3 mr-1" />
-                      Civic Verified Developer
-                    </Badge>
+          <div className="grid lg:grid-cols-2 gap-8">
+            {/* Founder Card */}
+            <Card className="bg-white/80 backdrop-blur-xl border-gray-100 shadow-xl overflow-hidden rounded-3xl">
+              <CardContent className="p-0">
+                <div className="grid lg:grid-cols-2">
+                  <div className="relative">
+                    <img
+                      src="https://dafi.hacktivators.com/team/dev1.jpg"
+                      alt="Java Jay Bartolome"
+                      className="w-full h-96 lg:h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                   </div>
 
-                  <p className="text-gray-600 leading-relaxed mb-6">
-                    "I built Authora because I saw too many talented creators struggling with Web3's complexity. As a
-                    developer who's worked in both traditional and decentralized systems, I knew there had to be a
-                    better way."
-                  </p>
+                  <div className="p-12 flex flex-col justify-center">
+                    <div className="mb-6">
+                      <h3 className="text-3xl font-bold text-gray-900 mb-2">Java Jay Bartolome</h3>
+                      <p className="text-xl text-blue-600 font-medium mb-4">Founder & Developer</p>
+                      <Badge className="bg-gradient-to-r from-green-500 to-blue-500 text-white border-0">
+                        <Award className="w-3 h-3 mr-1" />
+                        Civic Verified Developer
+                      </Badge>
+                    </div>
 
-                  <p className="text-gray-600 leading-relaxed mb-8">
-                    "My goal is simple: make Web3 as easy as using any social media platform. Every creator deserves
-                    access to global, permissionless payments without the technical headaches."
-                  </p>
+                    <p className="text-gray-600 leading-relaxed mb-6">
+                      "I built Authora because I saw too many talented creators struggling with Web3's complexity. As a developer who's worked in both traditional and decentralized systems, I knew there had to be a better way."
+                    </p>
 
-                  <div className="flex space-x-4">
-                    <Button variant="outline" size="sm" className="border-gray-200 text-gray-700 hover:bg-gray-50">
-                      <Twitter className="w-4 h-4 mr-2" />
-                      Follow
-                    </Button>
-                    <Button variant="outline" size="sm" className="border-gray-200 text-gray-700 hover:bg-gray-50">
-                      <Github className="w-4 h-4 mr-2" />
-                      GitHub
-                    </Button>
-                    <Button variant="outline" size="sm" className="border-gray-200 text-gray-700 hover:bg-gray-50">
-                      <Mail className="w-4 h-4 mr-2" />
-                      Contact
-                    </Button>
+                    <div className="flex space-x-4 mt-auto">
+                      <Button variant="outline" size="sm" className="border-gray-200 text-gray-700 hover:bg-gray-50">
+                        <Twitter className="w-4 h-4 mr-2" />
+                        Follow
+                      </Button>
+                      <Button variant="outline" size="sm" className="border-gray-200 text-gray-700 hover:bg-gray-50">
+                        <Github className="w-4 h-4 mr-2" />
+                        GitHub
+                      </Button>
+                      <Button variant="outline" size="sm" className="border-gray-200 text-gray-700 hover:bg-gray-50">
+                        <Mail className="w-4 h-4 mr-2" />
+                        Contact
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+
+            {/* Co-Founder Card */}
+            <Card className="bg-white/80 backdrop-blur-xl border-gray-100 shadow-xl overflow-hidden rounded-3xl">
+              <CardContent className="p-0">
+                <div className="grid lg:grid-cols-2">
+                  <div className="relative">
+                    <img
+                      src="https://avatars.githubusercontent.com/u/140808788?v=4"
+                      alt="SyntaxSurge"
+                      className="w-full h-96 lg:h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                  </div>
+
+                  <div className="p-12 flex flex-col justify-center">
+                    <div className="mb-6">
+                      <h3 className="text-3xl font-bold text-gray-900 mb-2">SyntaxSurge</h3>
+                      <p className="text-xl text-green-600 font-medium mb-4">Co-Founder</p>
+                    </div>
+
+                    <p className="text-gray-600 leading-relaxed mb-6">
+                      "Passionate about building the future of the decentralized web. My focus is on creating intuitive and powerful tools that empower users and developers alike."
+                    </p>
+
+                    <div className="flex space-x-4 mt-auto">
+                      <Button variant="outline" size="sm" className="border-gray-200 text-gray-700 hover:bg-gray-50">
+                        <Twitter className="w-4 h-4 mr-2" />
+                        Follow
+                      </Button>
+                      <Button variant="outline" size="sm" className="border-gray-200 text-gray-700 hover:bg-gray-50">
+                        <Github className="w-4 h-4 mr-2" />
+                        GitHub
+                      </Button>
+                      <Button variant="outline" size="sm" className="border-gray-200 text-gray-700 hover:bg-gray-50">
+                        <Mail className="w-4 h-4 mr-2" />
+                        Contact
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </section>
 
