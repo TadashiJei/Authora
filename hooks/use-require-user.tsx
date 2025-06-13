@@ -20,7 +20,7 @@ export function useRequireUser() {
     // Grace period (1 s) allows Civic to hydrate the session after hard reloads.
     const id = setTimeout(() => {
       router.replace("/auth-required")
-    }, 1000)
+    }, 3000)
 
     return () => clearTimeout(id)
   }, [isLoading, user, router])

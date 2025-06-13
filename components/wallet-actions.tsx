@@ -7,7 +7,7 @@ import {
   CreditCard,
   Download,
   QrCode,
-  Check,
+  Copy,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -24,7 +24,8 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { decodeQrFromImage, exportCsv } from "@/lib/utils"
 import { QRCodeSVG } from "qrcode.react"
-import { toast } from "@/hooks/use-toast"
+import { toast } from "sonner"
+import CopyButton from "@/components/copy-button"
 
 interface TxRow {
   hash: string
@@ -108,10 +109,15 @@ export default function WalletActions({
                 <>
                   <QRCodeSVG value={walletAddress} size={200} />
                   <p className="font-mono break-all text-sm">{walletAddress}</p>
-                  <Button size="sm" variant="outline" onClick={handleCopy}>
-                    <Check className="w-4 h-4 mr-2" />
+                  <CopyButton
+                    value={walletAddress}
+                    size="sm"
+                    variant="outline"
+                    suffix="Address"
+                  >
+                    <Copy className="w-4 h-4 mr-2" />
                     Copy Address
-                  </Button>
+                  </CopyButton>
                 </>
               ) : (
                 <p className="text-sm text-gray-600">Wallet address unavailable</p>

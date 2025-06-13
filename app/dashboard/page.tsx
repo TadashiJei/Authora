@@ -6,13 +6,14 @@ import {
   Wallet as WalletIcon,
   LinkIcon,
   BarChart3,
-  Zap,
   RefreshCw,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useWalletBalances } from "@/hooks/use-wallet-balances"
+import WalletOverview from "@/components/dashboard/wallet-overview"
+import PaymentLinksOverview from "@/components/dashboard/payment-links-overview"
 
 export default function DashboardPage() {
   const { user, isLoading } = useUser()
@@ -30,7 +31,7 @@ export default function DashboardPage() {
       setLinks(json.links || [])
     }
     load()
-  }, [])
+  }, [user])
 
   const totalEarnings = useMemo(
     () => links.reduce((s, l) => s + (l.earnings || 0), 0),
@@ -121,18 +122,19 @@ export default function DashboardPage() {
                 </Card>
               ))}
             </div>
+
+            <div className="grid md:grid-cols-2 gap-6 mt-8">
+              <WalletOverview compact />
+              <PaymentLinksOverview compact />
+            </div>
           </TabsContent>
 
           <TabsContent value="wallet">
-            <p className="text-gray-600">
-              Visit the Wallet section for detailed balances
-            </p>
+            <WalletOverview />
           </TabsContent>
 
           <TabsContent value="payments">
-            <p className="text-gray-600">
-              Manage links in the Payment Links section
-            </p>
+            <PaymentLinksOverview />
           </TabsContent>
         </Tabs>
       </div>

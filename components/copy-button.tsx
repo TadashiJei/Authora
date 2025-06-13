@@ -1,34 +1,53 @@
 "use client"
 
-import { Button, type ButtonProps } from "@/components/ui/button"
-import { copyText } from "@/lib/utils"
-import { toast } from "@/hooks/use-toast"
 import * as React from "react"
+import { Button, type ButtonProps } from "@/components/ui/button"
+import { Copy } from "lucide-react"
+import { copyText } from "@/lib/utils"
+import { toast } from "sonner"
 
 interface CopyButtonProps extends ButtonProps {
-  /** The value that will be copied to the clipboard */
+  /** Text that will be copied to clipboard */
   value: string
-  /** Optional message override for toast title */
+  /** Optional suffix: e.g. "Address" will render "Copy Address" */
+  suffix?: string
+  /** Hide label text and only show icon */
+  showText?: boolean
+  /** Override toast title */
   toastTitle?: string
-  /** Optional message override for toast description */
+  /** Override toast description */
   toastDescription?: string
 }
 
 export default function CopyButton({
   value,
+  suffix,
+  showText = true,
   toastTitle,
   toastDescription,
-  onClick,
+  children,
   ...props
 }: CopyButtonProps) {
   const handleClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (onClick) onClick(e)
+    if (props.onClick) props.onClick(e)
     const ok = await copyText(value)
-    toast({
-      title: toastTitle || (ok ? "Copied!" : "Copy failed"),
+    toast(ok ? toastTitle || "Copied!" : "Copy failed", {
       description: toastDescription || value,
     })
   }
 
-  return <Button {...props} onClick={handleClick} />
+  const label = children ? (
+    children
+  ) : (
+    <>
+      <Copy className="w-4 h-4 mr-2" />
+      {showText && `Copy${suffix ? ` ${suffix}` : ""}`}
+    </>
+  )
+
+  return (
+    <Button {...props} onClick={handleClick}>
+      {label}
+    </Button>
+  )
 }
