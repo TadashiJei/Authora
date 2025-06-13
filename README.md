@@ -1,6 +1,12 @@
+<div align="center">
+  <img src="https://avatars.githubusercontent.com/u/140808788?v=4" alt="Authora Logo" width="150" />
+</div>
+
 # Authora
 
-Authora is a modern, frictionless Web3 onboarding platform. It provides a seamless experience for users with a single link for verified identity, an embedded wallet, and the ability to accept crypto payments with zero friction.
+**Authora** is a modern, frictionless Web3 onboarding platform. It provides a seamless experience for users with a single link for verified identity, an embedded wallet, and the ability to accept crypto payments with zero friction.
+
+---
 
 ## ✨ Features
 
@@ -9,6 +15,8 @@ Authora is a modern, frictionless Web3 onboarding platform. It provides a seamle
 - **Embedded Wallet:** Built-in wallet functionality for easy management of crypto assets.
 - **Crypto Payments:** Accept cryptocurrency payments directly through the platform.
 - **Modern Tech Stack:** Built with Next.js, React, and Tailwind CSS for a fast and responsive user experience.
+
+---
 
 ## 🚀 Getting Started
 
@@ -48,6 +56,8 @@ Follow these instructions to get a copy of the project up and running on your lo
     ```
     The application should now be running at [http://localhost:3000](http://localhost:3000).
 
+---
+
 ## 🚢 Deployment
 
 This project is configured for easy deployment on [Vercel](https://vercel.com/).
@@ -58,6 +68,8 @@ When deploying, you must set up the same environment variables in your Vercel pr
 2.  Navigate to **Settings > Environment Variables**.
 3.  Add all the necessary variables from your `.env.example` file.
 
+---
+
 ## 🛠️ Tech Stack
 
 - **Framework:** [Next.js](https://nextjs.org/)
@@ -65,6 +77,18 @@ When deploying, you must set up the same environment variables in your Vercel pr
 - **UI Components:** [shadcn/ui](https://ui.shadcn.com/)
 - **Authentication:** [Civic Auth](https://docs.civic.com/auth)
 - **Web3:** [Wagmi](https://wagmi.sh/), [Viem](https://viem.sh/), [Solana Web3.js](https://solana-labs.github.io/solana-web3.js/)
+
+---
+
+## 👥 About Us
+
+This project was proudly developed by **Hacktivators.com / Tomeku**.
+
+### Team
+
+- **Software Engineer:** [SyntaxSurge](https://github.com/syntaxsurge)
+
+---
 
 ## 🤝 Contributing
 
