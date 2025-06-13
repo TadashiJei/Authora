@@ -260,7 +260,7 @@ export default function TermsPage() {
                 </p>
                 <div className="space-y-2 text-gray-600">
                   <p>
-                    <strong>Email:</strong> legal@authora.xyz
+                    <strong>Email:</strong> {`legal@${SITE_DOMAIN}`}
                   </p>
                   <p>
                     <strong>Address:</strong> Quezon City, Philippines

@@ -1,6 +1,7 @@
 import { promises as fs } from "fs"
 import path from "path"
 import { randomUUID } from "crypto"
+import { sendMail } from "./email"
 
 /* ---------- Types ---------- */
 
@@ -149,4 +150,40 @@ export async function getNotificationsByUser(userId: string): Promise<Notificati
   return list
     .filter((n) => n.userId === userId)
     .sort((a, b) => (a.time < b.time ? 1 : -1))
+}
+
+/**
+ * Persist a new notification and send an email copy.
+ */
+export async function addNotification(
+  userId: string,
+  payload: Pick<Notification, "type" | "title" | "message">,
+): Promise<Notification> {
+  await ensureNotificationsFile()
+  const current = await readNotifications()
+  const entry: Notification = {
+    id: randomUUID(),
+    userId,
+    type: payload.type,
+    title: payload.title,
+    message: payload.message,
+    time: new Date().toISOString(),
+    read: false,
+  }
+  current.push(entry)
+  await fs.writeFile(notificationsFile, JSON.stringify(current, null, 2))
+
+  // Fire‑and‑forget email
+  try {
+    await sendMail({
+      to: userId, // userId is the email for Civic users
+      subject: payload.title,
+      text: payload.message,
+      html: `<p>${payload.message}</p>`,
+    })
+  } catch (err) {
+    console.error("Email dispatch failed", err)
+  }
+
+  return entry
 }

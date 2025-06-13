@@ -238,7 +238,7 @@ export default function PrivacyPage() {
                 </ul>
 
                 <p className="text-gray-600">
-                  To exercise these rights, please contact us at privacy@authora.xyz. We will respond to your request
+                  To exercise these rights, please contact us at {`privacy@${SITE_DOMAIN}`}. We will respond to your request
                   within 30 days.
                 </p>
               </CardContent>
@@ -253,7 +253,7 @@ export default function PrivacyPage() {
                 </p>
                 <div className="space-y-2 text-gray-600">
                   <p>
-                    <strong>Email:</strong> privacy@authora.xyz
+                    <strong>Email:</strong> {`privacy@${SITE_DOMAIN}`}
                   </p>
                   <p>
                     <strong>Address:</strong> Quezon City, Philippines

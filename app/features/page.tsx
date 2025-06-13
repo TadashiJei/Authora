@@ -211,7 +211,7 @@ export default function FeaturesPage() {
 
                   <ul className="space-y-4">
                     {[
-                      "Custom payment page at authora.xyz/@yourname",
+                      `Custom payment page at ${SITE_DOMAIN}/@yourname`,
                       "QR code generation for in-person payments",
                       "Support for multiple cryptocurrencies",
                       "Customizable payment forms with your branding",

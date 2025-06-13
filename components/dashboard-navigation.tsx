@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import type { Notification } from "@/lib/db"
+import { buildAuthHeaders } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -38,16 +40,28 @@ import { useUser } from "@civic/auth-web3/react"
 export default function DashboardNavigation() {
   const { user, signOut } = useUser()
   const [isOpen, setIsOpen] = useState(false)
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      type: "payment",
-      title: "Payment Received",
-      message: "You received $299 USDC from 0x1234...5678",
-      time: "2 minutes ago",
-      read: false,
-    },
-  ])
+  const [notifications, setNotifications] = useState<Notification[]>([])
+
+  useEffect(() => {
+    async function load() {
+      if (!user) {
+        setNotifications([])
+        return
+      }
+      try {
+        const res = await fetch("/api/notifications", {
+          headers: buildAuthHeaders(user),
+        })
+        const json = await res.json()
+        setNotifications(json.notifications || [])
+      } catch (err) {
+        console.error("Failed to fetch notifications", err)
+      }
+    }
+    load()
+    const id = setInterval(load, 30000) // refresh every 30 s
+    return () => clearInterval(id)
+  }, [user])
 
   const unreadCount = notifications.filter((n) => !n.read).length
 
