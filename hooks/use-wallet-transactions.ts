@@ -1,9 +1,12 @@
 "use client"
 
 import { useAccount } from "wagmi"
-import { useConnection, useWallet } from "@solana/wallet-adapter-react"
+import { useConnection } from "@solana/wallet-adapter-react"
 import { PublicKey } from "@solana/web3.js"
 import { useEffect, useState } from "react"
+import { useUser } from "@civic/auth-web3/react"
+import { userHasWallet } from "@civic/auth-web3"
+import { loadSelectedChain } from "@/lib/utils"
 
 export interface WalletTransaction {
   hash: string
@@ -34,9 +37,14 @@ async function fetchEvmTxs(address: string, apiKey?: string) {
   })) as WalletTransaction[]
 }
 
-async function fetchSolTxs(connection: import("@solana/web3.js").Connection, address: string) {
+async function fetchSolTxs(
+  connection: import("@solana/web3.js").Connection,
+  address: string,
+) {
   const pubkey = new PublicKey(address)
-  const signatures = await connection.getSignaturesForAddress(pubkey, { limit: 10 })
+  const signatures = await connection.getSignaturesForAddress(pubkey, {
+    limit: 10,
+  })
   return signatures.map((sig) => ({
     hash: sig.signature,
     amount: "-",
@@ -47,12 +55,20 @@ async function fetchSolTxs(connection: import("@solana/web3.js").Connection, add
 
 /**
  * Return recent transactions for the active wallet (Ethereum or Solana).
- * Pass "solana" to force Solana lookup; otherwise defaults to Ethereum.
  */
 export function useWalletTransactions(selectedChain?: string | null) {
+  const effectiveChain = selectedChain ?? loadSelectedChain()
+  const isSolana = effectiveChain === "solana"
+
   const { address: evmAddress } = useAccount()
   const { connection } = useConnection()
-  const { publicKey } = useWallet()
+
+  const userContext = useUser()
+  const solAddress =
+    isSolana && userHasWallet(userContext)
+      ? userContext.solana?.address
+      : undefined
+
   const [transactions, setTransactions] = useState<WalletTransaction[]>([])
   const [loading, setLoading] = useState(false)
 
@@ -60,9 +76,9 @@ export function useWalletTransactions(selectedChain?: string | null) {
     async function load() {
       setLoading(true)
       try {
-        if (selectedChain === "solana") {
-          if (publicKey) {
-            const txs = await fetchSolTxs(connection, publicKey.toString())
+        if (isSolana) {
+          if (solAddress) {
+            const txs = await fetchSolTxs(connection, solAddress)
             setTransactions(txs)
           } else {
             setTransactions([])
@@ -83,7 +99,7 @@ export function useWalletTransactions(selectedChain?: string | null) {
       }
     }
     load()
-  }, [evmAddress, publicKey, connection, selectedChain])
+  }, [isSolana, solAddress, evmAddress, connection])
 
   return { transactions, loading }
 }

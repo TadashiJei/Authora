@@ -2,7 +2,11 @@
 
 import { useAccount, useBalance } from "wagmi"
 import { useEffect, useMemo, useState } from "react"
-import { useConnection, useWallet } from "@solana/wallet-adapter-react"
+import { useConnection } from "@solana/wallet-adapter-react"
+import { PublicKey } from "@solana/web3.js"
+import { useUser } from "@civic/auth-web3/react"
+import { userHasWallet } from "@civic/auth-web3"
+import { loadSelectedChain } from "@/lib/utils"
 
 export interface WalletBalance {
   symbol: string
@@ -32,37 +36,56 @@ async function fetchUsdPrice(id: string): Promise<number | undefined> {
 /* ---------- Hook ---------- */
 
 /**
- * Return real‑time wallet balances (native ETH or SOL) for the preferred chain.
- * Pass "solana" to see SOL balances; omit or pass any other value for EVM balances.
+ * Return real‑time wallet balances (native ETH or SOL).
+ * If selectedChain is not supplied, the persisted selection is used.
  */
 export function useWalletBalances(selectedChain?: string | null) {
+  const effectiveChain = selectedChain ?? loadSelectedChain()
+  const isSolana = effectiveChain === "solana"
+
+  /* ----- Civic user context (for embedded wallet address) ----- */
+  const userContext = useUser()
+  const solAddressFromUser =
+    isSolana && userHasWallet(userContext)
+      ? userContext.solana?.address
+      : undefined
+
   /* ----- Ethereum via wagmi ----- */
   const { address: evmAddress } = useAccount()
   const { data: evmBalance } = useBalance({
     address: evmAddress,
     unit: "ether",
     query: {
-      enabled: !!evmAddress && selectedChain !== "solana",
+      enabled: !!evmAddress && !isSolana,
       refetchInterval: 30000,
     },
   })
 
-  /* ----- Solana via wallet‑adapter ----- */
+  /* ----- Solana via RPC ----- */
   const { connection } = useConnection()
-  const { publicKey } = useWallet()
   const [solLamports, setSolLamports] = useState<bigint | null>(null)
 
   useEffect(() => {
     let cancelled = false
     async function poll() {
-      if (!publicKey || selectedChain === "evm") {
+      if (!isSolana) {
         setSolLamports(null)
         return
       }
-      const lamports = await connection.getBalance(publicKey, {
-        commitment: "confirmed",
-      })
-      if (!cancelled) setSolLamports(BigInt(lamports))
+      const addr = solAddressFromUser
+      if (!addr) {
+        setSolLamports(null)
+        return
+      }
+      try {
+        const lamports = await connection.getBalance(
+          new PublicKey(addr),
+          { commitment: "confirmed" },
+        )
+        if (!cancelled) setSolLamports(BigInt(lamports))
+      } catch {
+        if (!cancelled) setSolLamports(null)
+      }
     }
     poll()
     const id = setInterval(poll, 30000)
@@ -70,33 +93,35 @@ export function useWalletBalances(selectedChain?: string | null) {
       cancelled = true
       clearInterval(id)
     }
-  }, [connection, publicKey, selectedChain])
+  }, [connection, solAddressFromUser, isSolana])
 
   /* ----- USD prices ----- */
   const [ethUsd, setEthUsd] = useState<number | undefined>()
   const [solUsd, setSolUsd] = useState<number | undefined>()
 
   useEffect(() => {
-    if (evmBalance && ethUsd === undefined && selectedChain !== "solana") {
+    if (!isSolana && evmBalance && ethUsd === undefined) {
       fetchUsdPrice(COINGECKO_IDS.ethereum).then(setEthUsd)
     }
-  }, [evmBalance, ethUsd, selectedChain])
+  }, [evmBalance, ethUsd, isSolana])
 
   useEffect(() => {
-    if (publicKey && solUsd === undefined && selectedChain === "solana") {
+    if (isSolana && solAddressFromUser && solUsd === undefined) {
       fetchUsdPrice(COINGECKO_IDS.solana).then(setSolUsd)
     }
-  }, [publicKey, solUsd, selectedChain])
+  }, [solAddressFromUser, solUsd, isSolana])
 
   /* ----- Assemble result ----- */
   const balances = useMemo<WalletBalance[]>(() => {
     const list: WalletBalance[] = []
-    if (selectedChain === "solana") {
-      if (publicKey && solLamports !== null) {
+    if (isSolana) {
+      if (solAddressFromUser && solLamports !== null) {
         const sol = Number(solLamports) / 1_000_000_000
         list.push({
           symbol: "SOL",
-          formatted: sol.toLocaleString(undefined, { maximumFractionDigits: 6 }),
+          formatted: sol.toLocaleString(undefined, {
+            maximumFractionDigits: 6,
+          }),
           valueUsd: solUsd !== undefined ? sol * solUsd : undefined,
         })
       }
@@ -106,19 +131,20 @@ export function useWalletBalances(selectedChain?: string | null) {
           symbol: evmBalance.symbol,
           formatted: evmBalance.formatted,
           valueUsd:
-            ethUsd !== undefined ? Number(evmBalance.formatted) * ethUsd : undefined,
+            ethUsd !== undefined
+              ? Number(evmBalance.formatted) * ethUsd
+              : undefined,
         })
       }
     }
     return list
-  }, [evmBalance, publicKey, solLamports, ethUsd, solUsd, selectedChain])
+  }, [isSolana, solAddressFromUser, solLamports, solUsd, evmBalance, ethUsd])
 
   const totalUsd = balances.reduce((s, b) => s + (b.valueUsd || 0), 0)
 
-  const address =
-    selectedChain === "solana"
-      ? publicKey?.toString()
-      : evmAddress || publicKey?.toString()
+  const address = isSolana
+    ? solAddressFromUser
+    : evmAddress || solAddressFromUser
 
   return {
     address,
