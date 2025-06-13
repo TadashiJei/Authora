@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { BarChart3, DollarSign } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Select,
@@ -12,27 +11,28 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useWalletBalances } from "@/hooks/use-wallet-balances"
-
+import { buildAuthHeaders } from "@/lib/utils"
+import EarningsChart from "@/components/charts/EarningsChart"
 import { useUser } from "@civic/auth-web3/react"
 
 export default function AnalyticsPage() {
   const { user } = useUser()
   const { totalUsd } = useWalletBalances()
-  const [links, setLinks] = useState<{ earnings: number }[]>([])
+  const [links, setLinks] = useState<{ id: string; name: string; earnings: number }[]>([])
   const [range, setRange] = useState("30days")
 
+  /* ---------- Fetch user links ---------- */
   useEffect(() => {
     async function load() {
       if (!user) return
-      const res = await fetch("/api/links", {
-        headers: { "x-user-id": user.id || user.email || "" },
-      })
+      const res = await fetch("/api/links", { headers: buildAuthHeaders(user) })
       const json = await res.json()
       setLinks(json.links || [])
     }
     load()
-  }, [])
+  }, [user])
 
+  /* ---------- Aggregations ---------- */
   const totalEarnings = useMemo(
     () => links.reduce((s, l) => s + (l.earnings || 0), 0),
     [links],
@@ -42,10 +42,21 @@ export default function AnalyticsPage() {
     maximumFractionDigits: 2,
   })}`
 
+  /* ---------- Chart data (earnings per link) ---------- */
+  const chartData = useMemo(
+    () =>
+      links.map((l) => ({
+        label: l.name.length > 12 ? `${l.name.slice(0, 12)}…` : l.name,
+        value: l.earnings || 0,
+      })),
+    [links],
+  )
+
   return (
     <div className="pt-20 pb-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-between mb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        {/* Header */}
+        <div className="flex items-center justify-between">
           <h1 className="text-4xl font-bold text-gray-900">Analytics</h1>
           <Select value={range} onValueChange={setRange}>
             <SelectTrigger className="w-40 bg-white/50 border-gray-200">
@@ -59,7 +70,8 @@ export default function AnalyticsPage() {
           </Select>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
+        {/* High‑level stats */}
+        <div className="grid md:grid-cols-2 gap-6">
           <Card className="bg-white/10 backdrop-blur-xl border-white/20 shadow-xl">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
@@ -93,6 +105,7 @@ export default function AnalyticsPage() {
           </Card>
         </div>
 
+        {/* Earnings overview chart */}
         <Card className="bg-white/10 backdrop-blur-xl border-white/20 shadow-2xl">
           <CardHeader>
             <CardTitle className="flex items-center">
@@ -101,9 +114,11 @@ export default function AnalyticsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-center py-16 text-gray-600">
-              Detailed charts coming soon
-            </p>
+            {chartData.length === 0 ? (
+              <p className="text-center py-16 text-gray-600">No earnings yet</p>
+            ) : (
+              <EarningsChart data={chartData} />
+            )}
           </CardContent>
         </Card>
       </div>
