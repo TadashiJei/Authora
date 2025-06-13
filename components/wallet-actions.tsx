@@ -24,7 +24,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { decodeQrFromImage, exportCsv } from "@/lib/utils"
 import { QRCodeSVG } from "qrcode.react"
-import { toast } from "sonner"
+import { toast } from "@/hooks/use-toast"
 import CopyButton from "@/components/copy-button"
 
 interface TxRow {

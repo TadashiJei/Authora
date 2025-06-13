@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import {
   Copy,
   QrCode,
@@ -34,6 +35,7 @@ import { useUser } from "@civic/auth-web3/react"
 
 export default function LinksPage() {
   const { user } = useUser()
+  const router = useRouter()
   const [links, setLinks] = useState<LinkType[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [balanceVisible, setBalanceVisible] = useState(true)
@@ -295,13 +297,7 @@ export default function LinksPage() {
                             variant="outline"
                             size="sm"
                             className="border-gray-200 text-gray-700 hover:bg-gray-50"
-                            onClick={() =>
-                              toast({
-                                title: "Edit coming soon",
-                                description:
-                                  "Editing payment links is not yet implemented.",
-                              })
-                            }
+                            onClick={() => router.push(`/dashboard/links/${link.id}`)}
                           >
                             <Edit className="w-4 h-4" />
                           </Button>

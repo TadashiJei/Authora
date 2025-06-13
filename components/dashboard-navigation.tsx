@@ -188,7 +188,13 @@ export default function DashboardNavigation() {
                         <p className="text-sm font-medium">{user.email}</p>
                       </div>
                     </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
+<DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/dashboard/settings" className="flex items-center w-full">
+                        <Settings className="w-4 h-4 mr-2" />
+                        Settings
+                      </Link>
+                    </DropdownMenuItem>
                     <DropdownMenuItem onSelect={() => signOut()}>
                       <LogOut className="w-4 h-4 mr-2" />
                       Sign Out
