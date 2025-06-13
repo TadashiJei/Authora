@@ -11,15 +11,13 @@ import {
 import { ChevronDown } from "lucide-react"
 import { useAccount, useDisconnect, useSwitchChain } from "wagmi"
 import { usePathname, useSearchParams, useRouter } from "next/navigation"
-import { mainnet, polygon, sepolia } from "viem/chains"
+import { mainnet } from "viem/chains"
 
 type EvmChain = { id: number; name: string; short: string }
 type SolanaChain = { id: "solana"; name: string; short: string }
 
 const EVM_CHAINS: readonly EvmChain[] = [
   { id: mainnet.id, name: "Ethereum", short: "ETH" },
-  { id: sepolia.id, name: "Sepolia", short: "SEP" },
-  { id: polygon.id, name: "Polygon", short: "POL" },
 ]
 
 const SOLANA_CHAIN: SolanaChain = { id: "solana", name: "Solana", short: "SOL" }
@@ -53,12 +51,10 @@ export default function ChainSelector() {
 
   const handleSelect = (selected: EvmChain | SolanaChain) => {
     if (selected.id === "solana") {
-      // Moving from EVM to Solana: disconnect EVM connectors and flag in URL
       disconnect()
       setQuery("solana")
       return
     }
-    // Selecting an EVM chain
     if (queryChain === "solana") setQuery(null)
     if (selected.id !== chain?.id) {
       switchChain({ chainId: selected.id })

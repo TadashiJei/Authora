@@ -6,6 +6,7 @@ import { randomUUID } from "crypto"
 
 export interface Link {
   id: string
+  userId: string
   name: string
   url: string
   description: string
@@ -43,28 +44,33 @@ async function writeLinks(links: Link[]) {
 
 /* ---------- CRUD ---------- */
 
-export async function getLinks(): Promise<Link[]> {
-  return readLinks()
-}
-
-export async function getLink(id: string): Promise<Link | undefined> {
+export async function getLinksByUser(userId: string): Promise<Link[]> {
   const links = await readLinks()
-  return links.find((l) => l.id === id)
+  return links.filter((l) => l.userId === userId)
 }
 
-export async function addLink(payload: {
-  name: string
-  description: string
-  amount?: number
-  currency?: string
-}): Promise<Link> {
+export async function getLink(userId: string, id: string): Promise<Link | undefined> {
+  const links = await readLinks()
+  return links.find((l) => l.userId === userId && l.id === id)
+}
+
+export async function addLink(
+  userId: string,
+  payload: {
+    name: string
+    description: string
+    amount?: number
+    currency?: string
+  },
+): Promise<Link> {
   const links = await readLinks()
   const id = randomUUID()
   const created = new Date().toISOString()
-  const url = `authora.xyz/@creator/${id}`
+  const url = `authora.xyz/@${userId}/${id}`
 
   const newLink: Link = {
     id,
+    userId,
     name: payload.name,
     description: payload.description,
     amount: payload.amount,
@@ -82,20 +88,21 @@ export async function addLink(payload: {
 }
 
 export async function updateLink(
+  userId: string,
   id: string,
-  patch: Partial<Omit<Link, "id" | "created" | "url">>,
+  patch: Partial<Omit<Link, "id" | "created" | "url" | "userId">>,
 ): Promise<Link | undefined> {
   const links = await readLinks()
-  const idx = links.findIndex((l) => l.id === id)
+  const idx = links.findIndex((l) => l.userId === userId && l.id === id)
   if (idx === -1) return undefined
   links[idx] = { ...links[idx], ...patch }
   await writeLinks(links)
   return links[idx]
 }
 
-export async function deleteLink(id: string): Promise<boolean> {
+export async function deleteLink(userId: string, id: string): Promise<boolean> {
   const links = await readLinks()
-  const filtered = links.filter((l) => l.id !== id)
+  const filtered = links.filter((l) => !(l.userId === userId && l.id === id))
   if (filtered.length === links.length) return false
   await writeLinks(filtered)
   return true

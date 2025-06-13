@@ -73,3 +73,11 @@ export function exportCsv(filename: string, rows: string[][]) {
   document.body.removeChild(link)
   URL.revokeObjectURL(url)
 }
+
+/**
+ * Ensure a string is a fully‑qualified HTTP(S) URL; if scheme is missing, prepend https://.
+ */
+export function ensureHttp(url: string): string {
+  if (!url) return url
+  return /^https?:\/\//i.test(url) ? url : `https://${url.replace(/^\/+/, "")}`
+}

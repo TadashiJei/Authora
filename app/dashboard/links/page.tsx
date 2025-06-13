@@ -26,10 +26,14 @@ import {
 } from "@/components/ui/select"
 import { toast } from "@/hooks/use-toast"
 import type { Link as LinkType } from "@/lib/db"
+import { ensureHttp } from "@/lib/utils"
 import CopyButton from "@/components/copy-button"
 import QrCodeButton from "@/components/qr-code-button"
 
+import { useUser } from "@civic/auth-web3/react"
+
 export default function LinksPage() {
+  const { user } = useUser()
   const [links, setLinks] = useState<LinkType[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [balanceVisible, setBalanceVisible] = useState(true)
@@ -42,8 +46,11 @@ export default function LinksPage() {
 
   /* ---------- Data helpers ---------- */
   const refresh = async () => {
+    if (!user) return
     setIsLoading(true)
-    const res = await fetch("/api/links")
+    const res = await fetch("/api/links", {
+      headers: { "x-user-id": user.id || user.email || "" },
+    })
     const data = await res.json()
     setLinks(data.links)
     setIsLoading(false)
@@ -63,6 +70,7 @@ export default function LinksPage() {
     }
     const res = await fetch("/api/links", {
       method: "POST",
+      headers: { "Content-Type": "application/json", "x-user-id": user.id || user.email || "" },
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name,
@@ -82,6 +90,14 @@ export default function LinksPage() {
       const err = await res.json()
       toast({ title: "Error", description: err.error || "Unable to create link" })
     }
+  }
+
+  if (!user) {
+    return (
+      <div className="pt-20 pb-8 min-h-screen flex items-center justify-center">
+        <p className="text-xl text-gray-600">Please sign in to manage links.</p>
+      </div>
+    )
   }
 
   if (isLoading) {
@@ -184,110 +200,113 @@ export default function LinksPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {links.map((link) => (
-                  <Card
-                    key={link.id}
-                    className="bg-white/20 border-white/30 hover:bg-white/30 transition-all duration-300"
-                  >
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <CardTitle className="text-lg text-gray-900">
-                            {link.name}
-                          </CardTitle>
-                          <p className="text-blue-600 font-mono text-sm">
-                            {link.url}
-                          </p>
-                          <p className="text-gray-600 text-sm mt-1">
-                            {link.description}
-                          </p>
+                {links.map((link) => {
+                  const normalized = ensureHttp(link.url)
+                  return (
+                    <Card
+                      key={link.id}
+                      className="bg-white/20 border-white/30 hover:bg-white/30 transition-all duration-300"
+                    >
+                      <CardHeader>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <CardTitle className="text-lg text-gray-900">
+                              {link.name}
+                            </CardTitle>
+                            <p className="text-blue-600 font-mono text-sm">
+                              {normalized}
+                            </p>
+                            <p className="text-gray-600 text-sm mt-1">
+                              {link.description}
+                            </p>
+                          </div>
+                          <Badge
+                            className={
+                              link.status === "Active"
+                                ? "bg-green-100 text-green-700 border-green-200"
+                                : "bg-yellow-100 text-yellow-700 border-yellow-200"
+                            }
+                          >
+                            {link.status}
+                          </Badge>
                         </div>
-                        <Badge
-                          className={
-                            link.status === "Active"
-                              ? "bg-green-100 text-green-700 border-green-200"
-                              : "bg-yellow-100 text-yellow-700 border-yellow-200"
-                          }
-                        >
-                          {link.status}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm text-gray-600">Total Earnings</p>
-                          <p className="text-lg font-bold text-gray-900">
-                            {balanceVisible
-                              ? `$${link.earnings.toFixed(2)}`
-                              : "••••••"}
-                          </p>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-sm text-gray-600">Total Earnings</p>
+                            <p className="text-lg font-bold text-gray-900">
+                              {balanceVisible
+                                ? `$${link.earnings.toFixed(2)}`
+                                : "••••••"}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-600">Transactions</p>
+                            <p className="text-lg font-bold text-gray-900">
+                              {link.transactions}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm text-gray-600">Transactions</p>
-                          <p className="text-lg font-bold text-gray-900">
-                            {link.transactions}
-                          </p>
+                        <p className="text-sm text-gray-500">
+                          Created {new Date(link.created).toLocaleDateString()}
+                        </p>
+                        <div className="flex space-x-2">
+                          <CopyButton
+                            value={normalized}
+                            size="sm"
+                            variant="outline"
+                            className="flex-1 border-gray-200 text-gray-700 hover:bg-gray-50"
+                          >
+                            <Copy className="w-4 h-4 mr-2" />
+                            Copy
+                          </CopyButton>
+
+                          <QrCodeButton
+                            value={normalized}
+                            size="sm"
+                            variant="outline"
+                            className="flex-1 border-gray-200 text-gray-700 hover:bg-gray-50"
+                          >
+                            <QrCode className="w-4 h-4 mr-2" />
+                            QR Code
+                          </QrCodeButton>
+
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1 border-gray-200 text-gray-700 hover:bg-gray-50"
+                            onClick={() => {
+                              toast({
+                                title: "Opening link",
+                                description: "The payment page will open in a new tab.",
+                              })
+                              window.open(normalized, "_blank")
+                            }}
+                          >
+                            <Eye className="w-4 h-4 mr-2" />
+                            View
+                          </Button>
+
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="border-gray-200 text-gray-700 hover:bg-gray-50"
+                            onClick={() =>
+                              toast({
+                                title: "Edit coming soon",
+                                description:
+                                  "Editing payment links is not yet implemented.",
+                              })
+                            }
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
                         </div>
-                      </div>
-                      <p className="text-sm text-gray-500">
-                        Created {new Date(link.created).toLocaleDateString()}
-                      </p>
-                      <div className="flex space-x-2">
-                        <CopyButton
-                          value={link.url}
-                          size="sm"
-                          variant="outline"
-                          className="flex-1 border-gray-200 text-gray-700 hover:bg-gray-50"
-                        >
-                          <Copy className="w-4 h-4 mr-2" />
-                          Copy
-                        </CopyButton>
-
-                        <QrCodeButton
-                          value={link.url}
-                          size="sm"
-                          variant="outline"
-                          className="flex-1 border-gray-200 text-gray-700 hover:bg-gray-50"
-                        >
-                          <QrCode className="w-4 h-4 mr-2" />
-                          QR Code
-                        </QrCodeButton>
-
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1 border-gray-200 text-gray-700 hover:bg-gray-50"
-                          onClick={() => {
-                            toast({
-                              title: "Opening link",
-                              description: "The payment page will open in a new tab.",
-                            })
-                            window.open(link.url, "_blank")
-                          }}
-                        >
-                          <Eye className="w-4 h-4 mr-2" />
-                          View
-                        </Button>
-
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="border-gray-200 text-gray-700 hover:bg-gray-50"
-                          onClick={() =>
-                            toast({
-                              title: "Edit coming soon",
-                              description:
-                                "Editing payment links is not yet implemented.",
-                            })
-                          }
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardContent>
+                    </Card>
+                  )
+                })}
 
                 {links.length === 0 && (
                   <p className="text-center text-gray-600 py-8">

@@ -5,19 +5,18 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { WagmiProvider, createConfig } from "wagmi"
 import { embeddedWallet } from "@civic/auth-web3/wagmi"
 import { http } from "viem"
-import { mainnet, polygon, sepolia } from "viem/chains"
+import { mainnet } from "viem/chains"
 import { ConnectionProvider, WalletProvider } from "@solana/wallet-adapter-react"
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui"
 import { CivicAuthProvider } from "@civic/auth-web3/react"
+import { Toaster } from "@/components/ui/sonner"
 
 const queryClient = new QueryClient()
 
 const wagmiConfig = createConfig({
-  chains: [mainnet, sepolia, polygon],
+  chains: [mainnet],
   transports: {
     [mainnet.id]: http(),
-    [sepolia.id]: http(),
-    [polygon.id]: http(),
   },
   connectors: [embeddedWallet()],
 })
@@ -54,9 +53,10 @@ export default function Providers({ children }: { children: ReactNode }) {
                 clientId={CIVIC_CLIENT_ID}
                 initialChain={mainnet}
                 redirectUrl={redirectUrl}
-                chains={[mainnet, sepolia, polygon]}
+                chains={[mainnet]}
               >
                 {children}
+                <Toaster richColors position="top-right" />
               </CivicAuthProvider>
             </WalletModalProvider>
           </WalletProvider>
