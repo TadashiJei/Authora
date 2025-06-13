@@ -26,6 +26,33 @@ export async function decodeQrFromImage(file: File): Promise<string | null> {
 }
 
 /**
+ * Copy arbitrary text to the clipboard.
+ * Returns true on success, false otherwise.
+ */
+export async function copyText(value: string): Promise<boolean> {
+  try {
+    if (navigator?.clipboard?.writeText) {
+      await navigator.clipboard.writeText(value)
+      return true
+    }
+    // Fallback for very old browsers
+    const textarea = document.createElement("textarea")
+    textarea.value = value
+    textarea.style.position = "fixed"
+    textarea.style.opacity = "0"
+    document.body.appendChild(textarea)
+    textarea.focus()
+    textarea.select()
+    const success = document.execCommand("copy")
+    document.body.removeChild(textarea)
+    return success
+  } catch (err) {
+    console.error("Clipboard copy failed", err)
+    return false
+  }
+}
+
+/**
  * Export a 2‑D string array to CSV and trigger browser download.
  */
 export function exportCsv(filename: string, rows: string[][]) {

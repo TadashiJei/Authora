@@ -58,6 +58,33 @@ export default function DashboardPage() {
     }
   }, [user])
 
+  /* ----------------------------------------------
+   *  Shared transaction data for WalletActions
+   * ---------------------------------------------*/
+  const walletTransactions = useMemo(
+    () => [
+      {
+        hash: "0x1234...5678",
+        amount: "+$125.00",
+        token: "USDC",
+        timestamp: "2 hours ago",
+      },
+      {
+        hash: "0x2345...6789",
+        amount: "+$75.50",
+        token: "ETH",
+        timestamp: "1 day ago",
+      },
+      {
+        hash: "0x3456...7890",
+        amount: "-$25.00",
+        token: "USDC",
+        timestamp: "2 days ago",
+      },
+    ],
+    [],
+  )
+
   /* ------------------------------------------------------------------
    *  Remove auto‑sign‑in loop – CivicAuthProvider will restore session
    * -----------------------------------------------------------------*/
@@ -86,33 +113,6 @@ export default function DashboardPage() {
       </div>
     )
   }
-
-  /* ----------------------------------------------
-   *  Shared transaction data for WalletActions
-   * ---------------------------------------------*/
-  const walletTransactions = useMemo(
-    () => [
-      {
-        hash: "0x1234...5678",
-        amount: "+$125.00",
-        token: "USDC",
-        timestamp: "2 hours ago",
-      },
-      {
-        hash: "0x2345...6789",
-        amount: "+$75.50",
-        token: "ETH",
-        timestamp: "1 day ago",
-      },
-      {
-        hash: "0x3456...7890",
-        amount: "-$25.00",
-        token: "USDC",
-        timestamp: "2 days ago",
-      },
-    ],
-    [],
-  )
 
   return (
     <div className="pt-20 pb-8">
