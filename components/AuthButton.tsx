@@ -1,39 +1,52 @@
-// components/AuthButton.tsx
-'use client';
+'use client'
 
-import { Button } from "@/components/ui/button";
-import { useRouter } from 'next/navigation';
-
-import { useUser } from '@civic/auth-web3/react';
+import { Button } from "@/components/ui/button"
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
+import { useUser } from "@civic/auth-web3/react"
 
 export default function AuthButton() {
-  // const router = useRouter(); // No longer needed for basic login/logout
-  const { user, isLoading, signIn, signOut, authStatus, error } = useUser();
+  const router = useRouter()
+  const { user, isLoading, signIn, signOut } = useUser()
 
-  // You can use authStatus for more granular loading/error states if needed
-  // console.log('Civic Auth Status:', authStatus);
-  // if (error) console.error('Civic Auth Error:', error);
+  /* ---------- Effects ---------- */
+
+  // If a user is already logged‑in and happens to be on the landing page,
+  // move them directly to the dashboard.
+  useEffect(() => {
+    if (user && window.location.pathname === "/") {
+      router.replace("/dashboard")
+    }
+  }, [user, router])
+
+  /* ---------- Handlers ---------- */
 
   const handleLogin = async () => {
     try {
-      await signIn();
-      // router.push('/dashboard'); // Optionally redirect after login
+      await signIn()
+      router.replace("/dashboard")
     } catch (e) {
-      console.error("Login failed", e);
+      console.error("Login failed", e)
     }
-  };
+  }
 
   const handleLogout = async () => {
     try {
-      await signOut();
-      // router.push('/'); // Optionally redirect after logout
+      await signOut()
+      router.push("/")
     } catch (e) {
-      console.error("Logout failed", e);
+      console.error("Logout failed", e)
     }
-  };
+  }
+
+  /* ---------- UI ---------- */
 
   if (isLoading) {
-    return <Button variant="outline" disabled>Loading...</Button>;
+    return (
+      <Button variant="outline" disabled>
+        Loading…
+      </Button>
+    )
   }
 
   if (user) {
@@ -41,12 +54,12 @@ export default function AuthButton() {
       <Button onClick={handleLogout} variant="outline">
         Logout
       </Button>
-    );
+    )
   }
 
   return (
     <Button onClick={handleLogin}>
       Login with Civic
     </Button>
-  );
+  )
 }

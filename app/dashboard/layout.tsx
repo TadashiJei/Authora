@@ -7,8 +7,15 @@ import { useRequireUser } from "@/hooks/use-require-user"
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const { user, isLoading } = useRequireUser()
 
-  if (isLoading || !user) {
-    // While we wait for redirect or auth resolution, render nothing to avoid flicker
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
+        <p className="text-xl text-gray-600 animate-pulse">Loading…</p>
+      </div>
+    )
+  }
+
+  if (!user) {
     return null
   }
 

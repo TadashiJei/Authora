@@ -14,9 +14,15 @@ export function useRequireUser() {
   const router = useRouter()
 
   useEffect(() => {
-    if (!isLoading && !user) {
+    if (isLoading) return
+    if (user) return
+
+    // Grace period (1 s) allows Civic to hydrate the session after hard reloads.
+    const id = setTimeout(() => {
       router.replace("/auth-required")
-    }
+    }, 1000)
+
+    return () => clearTimeout(id)
   }, [isLoading, user, router])
 
   return { user, isLoading }

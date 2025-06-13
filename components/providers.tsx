@@ -1,9 +1,9 @@
-"use client"
+'use client'
 
 import { ReactNode, useMemo } from "react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { WagmiProvider, createConfig } from "wagmi"
-import { embeddedWallet } from "@civic/auth-web3/wagmi"
+import { embeddedWallet, useAutoConnect } from "@civic/auth-web3/wagmi"
 import { http } from "viem"
 import { mainnet } from "viem/chains"
 import { ConnectionProvider, WalletProvider } from "@solana/wallet-adapter-react"
@@ -22,12 +22,20 @@ const wagmiConfig = createConfig({
 })
 
 const SOLANA_RPC =
-  process.env.NEXT_PUBLIC_SOLANA_RPC_ENDPOINT || "https://api.mainnet-beta.solana.com"
+  process.env.NEXT_PUBLIC_SOLANA_RPC_ENDPOINT ||
+  "https://api.mainnet-beta.solana.com"
 const CIVIC_CLIENT_ID = process.env.NEXT_PUBLIC_CIVIC_AUTH_CLIENT_ID || ""
 
-/**
- * Return a redirect URL accepted by Civic based on environment config or window origin.
- */
+/* ---------- Auto‑connect helper (must live inside providers) ---------- */
+
+function AutoConnect() {
+  // Automatically creates & connects the embedded wallet when possible.
+  useAutoConnect()
+  return null
+}
+
+/* ---------- Redirect URL helper ---------- */
+
 function useRedirectUrl() {
   return useMemo(() => {
     if (process.env.NEXT_PUBLIC_CIVIC_AUTH_REDIRECT_URI) {
@@ -55,6 +63,7 @@ export default function Providers({ children }: { children: ReactNode }) {
                 redirectUrl={redirectUrl}
                 chains={[mainnet]}
               >
+                <AutoConnect />
                 {children}
                 <Toaster richColors position="top-right" />
               </CivicAuthProvider>

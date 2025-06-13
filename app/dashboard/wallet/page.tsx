@@ -123,9 +123,11 @@ export default function WalletPage() {
                 {/* Token balances */}
                 <div className="space-y-4">
                   <h4 className="font-semibold text-gray-900">Token Balances</h4>
-                  {balances.length === 0 && (
+                  {(!address || balances.length === 0) && (
                     <p className="text-gray-600 text-sm">
-                      Connect your wallet to view balances
+                      {address
+                        ? "No token balances found"
+                        : "Connecting to your wallet…"}
                     </p>
                   )}
                   {balances.map((b) => (

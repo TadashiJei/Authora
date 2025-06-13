@@ -1,6 +1,6 @@
-"use client"
+'use client'
 
-import { useCallback, useMemo } from "react"
+import { useCallback, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { ChevronDown } from "lucide-react"
 import { useAccount, useDisconnect, useSwitchChain } from "wagmi"
-import { usePathname, useSearchParams, useRouter } from "next/navigation"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { mainnet } from "viem/chains"
 
 type EvmChain = { id: number; name: string; short: string }
@@ -20,9 +20,31 @@ const EVM_CHAINS: readonly EvmChain[] = [
   { id: mainnet.id, name: "Ethereum", short: "ETH" },
 ]
 
-const SOLANA_CHAIN: SolanaChain = { id: "solana", name: "Solana", short: "SOL" }
+const SOLANA_CHAIN: SolanaChain = {
+  id: "solana",
+  name: "Solana",
+  short: "SOL",
+}
 
 const CHAINS: readonly (EvmChain | SolanaChain)[] = [...EVM_CHAINS, SOLANA_CHAIN]
+
+/* ---------- Persistent helpers ---------- */
+
+const LS_KEY = "authora.selectedChain"
+
+function saveSelected(id: string) {
+  try {
+    localStorage.setItem(LS_KEY, id)
+  } catch {}
+}
+
+function loadSelected(): string | null {
+  try {
+    return localStorage.getItem(LS_KEY)
+  } catch {
+    return null
+  }
+}
 
 export default function ChainSelector() {
   const { chain } = useAccount()
@@ -32,22 +54,29 @@ export default function ChainSelector() {
   const searchParams = useSearchParams()
   const router = useRouter()
 
-  const queryChain = searchParams.get("chain")
+  /* ---------- Determine current chain ---------- */
+
+  const queryChain = searchParams.get("chain") ?? loadSelected()
 
   const current = useMemo(() => {
     if (queryChain === "solana") return SOLANA_CHAIN
     return EVM_CHAINS.find((c) => c.id === chain?.id) ?? EVM_CHAINS[0]
   }, [chain?.id, queryChain])
 
+  /* ---------- Sync URL query + localStorage ---------- */
+
   const setQuery = useCallback(
     (val: string | null) => {
       const p = new URLSearchParams(searchParams.toString())
       if (val) p.set("chain", val)
       else p.delete("chain")
+      saveSelected(val ?? "")
       router.replace(`${pathname}?${p.toString()}`)
     },
     [pathname, router, searchParams],
   )
+
+  /* ---------- Handle selection ---------- */
 
   const handleSelect = (selected: EvmChain | SolanaChain) => {
     if (selected.id === "solana") {
@@ -61,10 +90,24 @@ export default function ChainSelector() {
     }
   }
 
+  /* ---------- Ensure initial localStorage value reflected in URL ---------- */
+
+  useEffect(() => {
+    if (queryChain && !searchParams.get("chain")) {
+      setQuery(queryChain)
+    }
+  }, [queryChain, searchParams, setQuery])
+
+  /* ---------- UI ---------- */
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="flex items-center space-x-1">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="flex items-center space-x-1"
+        >
           <span className="font-medium truncate">{current.short}</span>
           <ChevronDown className="w-4 h-4" />
         </Button>
@@ -74,7 +117,8 @@ export default function ChainSelector() {
           <DropdownMenuItem
             key={c.id}
             onSelect={() => handleSelect(c)}
-            disabled={switching || (c.id === current.id && queryChain !== "solana")}
+            disabled={switching || c.id === current.id}
+            className="cursor-pointer data-[disabled]:opacity-50"
           >
             {c.name}
           </DropdownMenuItem>
