@@ -18,6 +18,13 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -205,13 +212,24 @@ export default function LinkEditPage() {
                 <div className="flex gap-2">
                   <Button
                     className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                    disabled={!linkUrl}
                     onClick={() => {
-                      navigator.clipboard.writeText(linkUrl)
-                      toast({ title: "Link copied" })
+                      if (!linkUrl) return
+                      if (navigator.share) {
+                        navigator
+                          .share({
+                            url: linkUrl,
+                            title: link?.name || "Payment Link",
+                          })
+                          .catch(() => {})
+                      } else {
+                        navigator.clipboard.writeText(linkUrl)
+                        toast({ title: "Link copied" })
+                      }
                     }}
                   >
                     <Share className="w-4 h-4 mr-2" />
-                    Share Link
+                    {linkUrl ? "Share Link" : "Loading…"}
                   </Button>
                   <Button
                     variant="outline"
@@ -299,11 +317,16 @@ export default function LinkEditPage() {
                   </div>
                   <div className="space-y-2">
                     <Label>Preferred Currency</Label>
-                    <Input
-                      value={currency}
-                      onChange={(e) => setCurrency(e.target.value)}
-                      placeholder="USDC"
-                    />
+                    <Select value={currency} onValueChange={setCurrency}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select currency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="USDC">USDC</SelectItem>
+                        <SelectItem value="ETH">ETH</SelectItem>
+                        <SelectItem value="SOL">SOL</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 

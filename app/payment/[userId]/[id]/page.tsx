@@ -1,9 +1,12 @@
 import { getLink } from "@/lib/db"
 import { notFound } from "next/navigation"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import CopyButton from "@/components/copy-button"
-import { Copy } from "lucide-react"
+import QrCodeButton from "@/components/qr-code-button"
+import { Copy, QrCode, Lock } from "lucide-react"
+import Link from "next/link"
+import { ensureHttp } from "@/lib/utils"
 
 export default async function PaymentLinkPage({
   params,
@@ -13,45 +16,83 @@ export default async function PaymentLinkPage({
   const link = await getLink(params.userId, params.id)
   if (!link) notFound()
 
+  const linkUrl = ensureHttp(link.url)
+  const paused = link.status !== "Active"
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 p-6">
-      <Card className="bg-white/80 backdrop-blur-xl shadow-2xl w-full max-w-xl">
-        <CardContent className="p-8 space-y-6">
-          <header className="text-center space-y-2">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-              {link.name}
-            </h1>
-            <p className="text-gray-700">{link.description}</p>
-            {link.amount && (
-              <p className="text-4xl font-extrabold text-gray-900">
-                {link.amount} {link.currency || "USDC"}
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 flex items-center justify-center p-6">
+      <Card className="w-full max-w-2xl bg-white/80 backdrop-blur-xl shadow-2xl">
+        <CardHeader className="text-center space-y-2">
+          <CardTitle className="text-4xl font-extrabold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+            {link.name}
+          </CardTitle>
+          <p className="text-gray-700 text-lg">{link.description}</p>
+        </CardHeader>
+        <CardContent className="space-y-8">
+          {paused ? (
+            <div className="flex flex-col items-center space-y-4">
+              <Lock className="w-12 h-12 text-yellow-600" />
+              <p className="text-xl font-semibold text-yellow-700">
+                This link is currently paused
               </p>
-            )}
-          </header>
+              <p className="text-gray-600 text-center max-w-sm">
+                The creator has temporarily disabled support for this page.
+                Please check back later.
+              </p>
+            </div>
+          ) : (
+            <>
+              {link.amount && (
+                <div className="text-center">
+                  <p className="uppercase text-sm text-gray-600 tracking-wide">
+                    Support Amount
+                  </p>
+                  <p className="text-5xl font-extrabold text-gray-900">
+                    {link.amount}&nbsp;{link.currency || "USDC"}
+                  </p>
+                </div>
+              )}
 
-          <Button
-            size="lg"
-            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 transition-transform hover:scale-105"
-          >
-            Support&nbsp;Creator
-          </Button>
+              <Button
+                size="lg"
+                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 transition-transform hover:scale-105 text-lg"
+              >
+                Support&nbsp;Creator
+              </Button>
+            </>
+          )}
 
-          <div className="text-center">
+          <div className="grid sm:grid-cols-2 gap-4">
             <CopyButton
-              value={link.url}
-              variant="ghost"
-              size="sm"
-              className="mx-auto"
+              value={linkUrl}
+              variant="outline"
+              className="w-full justify-center bg-white/30 border-white/50"
               suffix="Link"
             >
-              <Copy className="w-4 h-4 mr-1" />
+              <Copy className="w-5 h-5 mr-2" />
               Copy&nbsp;Link
             </CopyButton>
+            <QrCodeButton
+              value={linkUrl}
+              variant="outline"
+              className="w-full justify-center bg-white/30 border-white/50"
+            >
+              <QrCode className="w-5 h-5 mr-2" />
+              Show&nbsp;QR
+            </QrCodeButton>
           </div>
 
-          <p className="text-center text-xs text-gray-500">
-            Powered by Authora • Civic&nbsp;Auth&nbsp;Embedded&nbsp;Wallets
-          </p>
+          <div className="text-center text-xs text-gray-500 space-y-1">
+            <p>
+              Secure payments powered by <span className="font-semibold">Authora</span> • Civic&nbsp;Auth&nbsp;Wallets
+            </p>
+            <Link
+              href="https://authora.xyz"
+              className="text-purple-600 hover:underline"
+            >
+              Learn more
+            </Link>
+          </div>
         </CardContent>
       </Card>
     </div>
