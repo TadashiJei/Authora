@@ -1,6 +1,6 @@
 'use client'
 
-import { ReactNode, useMemo } from "react"
+import { ReactNode, useMemo, useEffect } from "react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { WagmiProvider, createConfig } from "wagmi"
 import { embeddedWallet, useAutoConnect } from "@civic/auth-web3/wagmi"
@@ -8,7 +8,8 @@ import { http } from "viem"
 import { mainnet } from "viem/chains"
 import { ConnectionProvider, WalletProvider } from "@solana/wallet-adapter-react"
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui"
-import { CivicAuthProvider } from "@civic/auth-web3/react"
+import { CivicAuthProvider, useUser } from "@civic/auth-web3/react"
+import { userHasWallet } from "@civic/auth-web3"
 import { Toaster } from "@/components/ui/sonner"
 
 const queryClient = new QueryClient()
@@ -29,8 +30,21 @@ const CIVIC_CLIENT_ID = process.env.NEXT_PUBLIC_CIVIC_AUTH_CLIENT_ID || ""
 /* ---------- Auto‑connect helper (must live inside providers) ---------- */
 
 function AutoConnect() {
-  // Automatically creates & connects the embedded wallet when possible.
+  // EVM: automatically creates & connects the embedded wallet when possible.
   useAutoConnect()
+
+  // Solana: create the embedded wallet if missing, then wallet‑adapter will auto‑connect.
+  const userContext = useUser()
+
+  useEffect(() => {
+    if (!userContext.user) return
+    if (!userHasWallet(userContext) && !(userContext as any).walletCreationInProgress) {
+      userContext.createWallet().catch((err: unknown) =>
+        console.error("Failed to create Civic Solana wallet", err),
+      )
+    }
+  }, [userContext])
+
   return null
 }
 

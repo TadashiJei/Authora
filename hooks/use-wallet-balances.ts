@@ -40,9 +40,11 @@ export function useWalletBalances(selectedChain?: string | null) {
   const { address: evmAddress } = useAccount()
   const { data: evmBalance } = useBalance({
     address: evmAddress,
-    watch: true,
-    formatUnits: "ether",
-    enabled: !!evmAddress && selectedChain !== "solana",
+    unit: "ether",
+    query: {
+      enabled: !!evmAddress && selectedChain !== "solana",
+      refetchInterval: 30000,
+    },
   })
 
   /* ----- Solana via wallet‑adapter ----- */
