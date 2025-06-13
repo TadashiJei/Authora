@@ -66,7 +66,11 @@ export async function addLink(
   const links = await readLinks()
   const id = randomUUID()
   const created = new Date().toISOString()
-  const url = `authora.xyz/@${userId}/${id}`
+  const base =
+    process.env.NEXT_PUBLIC_BASE_URL ||
+    process.env.BASE_URL ||
+    "http://localhost:3000"
+  const url = `${base.replace(/\/+$/, "")}/payment/${userId}/${id}`
 
   const newLink: Link = {
     id,

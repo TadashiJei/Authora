@@ -81,3 +81,15 @@ export function ensureHttp(url: string): string {
   if (!url) return url
   return /^https?:\/\//i.test(url) ? url : `https://${url.replace(/^\/+/, "")}`
 }
+
+/**
+ * Build common JSON headers and optionally append x-user-id when a Civic user is present.
+ */
+export function buildAuthHeaders(
+  user: { id?: string | null; email?: string | null } | null | undefined,
+): Record<string, string> {
+  return {
+    "Content-Type": "application/json",
+    ...(user ? { "x-user-id": user.id || user.email || "" } : {}),
+  }
+}

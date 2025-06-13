@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/select"
 import { toast } from "@/hooks/use-toast"
 import type { Link as LinkType } from "@/lib/db"
-import { ensureHttp } from "@/lib/utils"
+import { ensureHttp, buildAuthHeaders } from "@/lib/utils"
 import CopyButton from "@/components/copy-button"
 import QrCodeButton from "@/components/qr-code-button"
 
@@ -49,7 +49,7 @@ export default function LinksPage() {
     if (!user) return
     setIsLoading(true)
     const res = await fetch("/api/links", {
-      headers: { "x-user-id": user.id || user.email || "" },
+      headers: buildAuthHeaders(user),
     })
     const data = await res.json()
     setLinks(data.links)
@@ -68,10 +68,13 @@ export default function LinksPage() {
       toast({ title: "Name required" })
       return
     }
+    if (!user) {
+      toast({ title: "Please sign in" })
+      return
+    }
     const res = await fetch("/api/links", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "x-user-id": user.id || user.email || "" },
-      headers: { "Content-Type": "application/json" },
+      headers: buildAuthHeaders(user),
       body: JSON.stringify({
         name,
         description,
