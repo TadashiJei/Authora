@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
+import { Suspense } from "react"
 import Providers from "@/components/providers"
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
@@ -27,11 +28,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} font-sans`}>
-        <Providers>
-          <Navigation />
-          {children}
-          <Footer />
-        </Providers>
+        <Suspense>
+          <Providers>
+            <Navigation />
+            {children}
+            <Footer />
+          </Providers>
+        </Suspense>
       </body>
     </html>
   )
