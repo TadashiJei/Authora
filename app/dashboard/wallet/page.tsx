@@ -11,15 +11,48 @@ import {
   Eye,
   EyeOff,
   RefreshCw,
-  CreditCard,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import WalletActions from "@/components/wallet-actions"
 
 export default function WalletPage() {
   const [balanceVisible, setBalanceVisible] = useState(true)
+
+  const transactions = [
+    {
+      type: "received",
+      amount: "+$125.00",
+      token: "USDC",
+      from: "Client Payment",
+      time: "2 hours ago",
+      hash: "0x1234...5678",
+      icon: ArrowDownLeft,
+      color: "text-green-600",
+    },
+    {
+      type: "received",
+      amount: "+$75.50",
+      token: "ETH",
+      from: "Freelance Work",
+      time: "1 day ago",
+      hash: "0x2345...6789",
+      icon: ArrowDownLeft,
+      color: "text-green-600",
+    },
+    {
+      type: "sent",
+      amount: "-$25.00",
+      token: "USDC",
+      from: "Gas Fee",
+      time: "2 days ago",
+      hash: "0x3456...7890",
+      icon: ArrowUpRight,
+      color: "text-red-600",
+    },
+  ]
 
   return (
     <div className="pt-20 pb-8">
@@ -137,13 +170,6 @@ export default function WalletPage() {
                           {token.change}
                         </p>
                       </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="ml-4 border-gray-200 text-gray-700 hover:bg-gray-50"
-                      >
-                        Send
-                      </Button>
                     </div>
                   ))}
                 </div>
@@ -169,38 +195,7 @@ export default function WalletPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {[
-                    {
-                      type: "received",
-                      amount: "+$125.00",
-                      token: "USDC",
-                      from: "Client Payment",
-                      time: "2 hours ago",
-                      hash: "0x1234...5678",
-                      icon: ArrowDownLeft,
-                      color: "text-green-600",
-                    },
-                    {
-                      type: "received",
-                      amount: "+$75.50",
-                      token: "ETH",
-                      from: "Freelance Work",
-                      time: "1 day ago",
-                      hash: "0x2345...6789",
-                      icon: ArrowDownLeft,
-                      color: "text-green-600",
-                    },
-                    {
-                      type: "sent",
-                      amount: "-$25.00",
-                      token: "USDC",
-                      from: "Gas Fee",
-                      time: "2 days ago",
-                      hash: "0x3456...7890",
-                      icon: ArrowUpRight,
-                      color: "text-red-600",
-                    },
-                  ].map((tx, index) => (
+                  {transactions.map((tx, index) => (
                     <div
                       key={index}
                       className="flex items-center justify-between p-4 bg-white/20 rounded-xl hover:bg-white/30 transition-colors"
@@ -228,40 +223,14 @@ export default function WalletPage() {
             </Card>
           </div>
 
-          {/* Wallet Actions */}
+          {/* Wallet Actions and Security */}
           <div className="space-y-6">
-            <Card className="bg-white/10 backdrop-blur-xl border-white/20 shadow-2xl">
-              <CardHeader>
-                <CardTitle className="text-xl text-gray-900">Wallet Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button className="w-full bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white">
-                  <ArrowDownLeft className="w-4 h-4 mr-2" />
-                  Receive Crypto
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full bg-white/20 border-white/30 text-gray-700 hover:bg-white/30"
-                >
-                  <ArrowUpRight className="w-4 h-4 mr-2" />
-                  Send Crypto
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full bg-white/20 border-white/30 text-gray-700 hover:bg-white/30"
-                >
-                  <CreditCard className="w-4 h-4 mr-2" />
-                  Buy Crypto
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full bg-white/20 border-white/30 text-gray-700 hover:bg-white/30"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Export History
-                </Button>
-              </CardContent>
-            </Card>
+            <WalletActions walletAddress="0x742d35Cc6634C0532925a3b8D4C0532925a3b8f3a" transactions={transactions.map(tx => ({
+              hash: tx.hash,
+              amount: tx.amount,
+              token: tx.token,
+              timestamp: tx.time,
+            }))} />
 
             {/* Security Status */}
             <Card className="bg-white/10 backdrop-blur-xl border-white/20 shadow-2xl">
@@ -288,10 +257,6 @@ export default function WalletPage() {
                   <span className="text-sm text-gray-600">Backup Status</span>
                   <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">Pending</Badge>
                 </div>
-                <Button variant="outline" className="w-full border-gray-200 text-gray-700 hover:bg-gray-50 mt-4">
-                  <Shield className="w-4 h-4 mr-2" />
-                  Security Settings
-                </Button>
               </CardContent>
             </Card>
           </div>
