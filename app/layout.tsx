@@ -1,10 +1,9 @@
-import type React from "react"
-import type { Metadata } from "next";
-import { CivicAuthProvider } from '@civic/auth-web3/nextjs';
+import type { Metadata } from "next"
 import { Inter } from "next/font/google"
-import "./globals.css"
+import Providers from "@/components/providers"
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
+import "./globals.css"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -15,8 +14,9 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "Authora - Frictionless Web3 Onboarding",
-  description: "One Link. Verified Identity. Embedded Wallet. Accept crypto payments with zero friction.",
-    generator: 'tadashijei.com'
+  description:
+    "One Link. Verified Identity. Embedded Wallet. Accept crypto payments with zero friction.",
+  generator: "tadashijei.com",
 }
 
 export default function RootLayout({
@@ -27,11 +27,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} font-sans`}>
-        <CivicAuthProvider>
+        <Providers>
           <Navigation />
           {children}
           <Footer />
-        </CivicAuthProvider>
+        </Providers>
       </body>
     </html>
   )

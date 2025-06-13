@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import Link from "next/link"
+import ChainSelector from "./chain-selector"
 
 export default function DashboardNavigation() {
   const [isOpen, setIsOpen] = useState(false)
@@ -64,7 +65,9 @@ export default function DashboardNavigation() {
   const unreadCount = notifications.filter((n) => !n.read).length
 
   const markAsRead = (id: number) => {
-    setNotifications(notifications.map((n) => (n.id === id ? { ...n, read: true } : n)))
+    setNotifications(
+      notifications.map((n) => (n.id === id ? { ...n, read: true } : n)),
+    )
   }
 
   const getNotificationIcon = (type: string) => {
@@ -92,7 +95,10 @@ export default function DashboardNavigation() {
             <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
               Authora
             </span>
-            <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
+            <Badge
+              variant="outline"
+              className="text-xs bg-purple-50 text-purple-700 border-purple-200"
+            >
               Dashboard
             </Badge>
           </Link>
@@ -105,7 +111,7 @@ export default function DashboardNavigation() {
             >
               <Home className="w-4 h-4" />
               <span>Overview</span>
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-purple-600 group-hover:w-full transition-all duration-300"></span>
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-purple-600 group-hover:w-full transition-all duration-300" />
             </Link>
             <Link
               href="/dashboard/wallet"
@@ -113,7 +119,7 @@ export default function DashboardNavigation() {
             >
               <Wallet className="w-4 h-4" />
               <span>Wallet</span>
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-purple-600 group-hover:w-full transition-all duration-300"></span>
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-purple-600 group-hover:w-full transition-all duration-300" />
             </Link>
             <Link
               href="/dashboard/links"
@@ -121,7 +127,7 @@ export default function DashboardNavigation() {
             >
               <LinkIcon className="w-4 h-4" />
               <span>Links</span>
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-purple-600 group-hover:w-full transition-all duration-300"></span>
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-purple-600 group-hover:w-full transition-all duration-300" />
             </Link>
             <Link
               href="/dashboard/analytics"
@@ -129,20 +135,28 @@ export default function DashboardNavigation() {
             >
               <BarChart3 className="w-4 h-4" />
               <span>Analytics</span>
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-purple-600 group-hover:w-full transition-all duration-300"></span>
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-purple-600 group-hover:w-full transition-all duration-300" />
             </Link>
           </div>
 
           {/* Right Side */}
           <div className="hidden md:flex items-center space-x-4">
+            <ChainSelector />
+
             {/* Notifications */}
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="ghost" size="sm" className="relative text-gray-700 hover:text-purple-600">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="relative text-gray-700 hover:text-purple-600"
+                >
                   <Bell className="w-5 h-5" />
                   {unreadCount > 0 && (
                     <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
-                      <span className="text-xs text-white font-bold">{unreadCount}</span>
+                      <span className="text-xs text-white font-bold">
+                        {unreadCount}
+                      </span>
                     </span>
                   )}
                 </Button>
@@ -169,10 +183,16 @@ export default function DashboardNavigation() {
                         {getNotificationIcon(notification.type)}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <p className="font-medium text-sm">{notification.title}</p>
-                            {!notification.read && <div className="w-2 h-2 bg-blue-600 rounded-full" />}
+                            <p className="font-medium text-sm">
+                              {notification.title}
+                            </p>
+                            {!notification.read && (
+                              <div className="w-2 h-2 bg-blue-600 rounded-full" />
+                            )}
                           </div>
-                          <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
+                          <p className="text-sm text-gray-600 mt-1">
+                            {notification.message}
+                          </p>
                           <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
                             <Clock className="w-3 h-3" />
                             {notification.time}
@@ -192,7 +212,11 @@ export default function DashboardNavigation() {
 
             {/* Help */}
             <Link href="/dashboard/help">
-              <Button variant="ghost" size="sm" className="text-gray-700 hover:text-purple-600">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-gray-700 hover:text-purple-600"
+              >
                 <HelpCircle className="w-5 h-5" />
               </Button>
             </Link>
@@ -200,7 +224,10 @@ export default function DashboardNavigation() {
             {/* User Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center space-x-2 text-gray-700 hover:text-purple-600">
+                <Button
+                  variant="ghost"
+                  className="flex items-center space-x-2 text-gray-700 hover:text-purple-600"
+                >
                   <Avatar className="w-8 h-8">
                     <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white font-bold">
                       C
@@ -253,7 +280,12 @@ export default function DashboardNavigation() {
 
           {/* Mobile menu button */}
           <div className="md:hidden">
-            <Button variant="ghost" size="sm" onClick={() => setIsOpen(!isOpen)} className="text-gray-700">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsOpen(!isOpen)}
+              className="text-gray-700"
+            >
               {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </Button>
           </div>
@@ -309,14 +341,21 @@ export default function DashboardNavigation() {
                 </div>
 
                 <div className="space-y-2">
+                  <ChainSelector />
                   <Link href="/dashboard/settings">
-                    <Button variant="outline" className="w-full justify-start border-gray-200 text-gray-700">
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start border-gray-200 text-gray-700"
+                    >
                       <Settings className="w-4 h-4 mr-2" />
                       Settings
                     </Button>
                   </Link>
                   <Link href="/dashboard/help">
-                    <Button variant="outline" className="w-full justify-start border-gray-200 text-gray-700">
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start border-gray-200 text-gray-700"
+                    >
                       <HelpCircle className="w-4 h-4 mr-2" />
                       Help
                     </Button>

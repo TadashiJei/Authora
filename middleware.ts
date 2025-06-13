@@ -1,15 +1,10 @@
-import { authMiddleware } from '@civic/auth-web3/nextjs/middleware';
+import type { NextRequest } from "next/server"
+import { NextResponse } from "next/server"
 
-export default authMiddleware();
+export function middleware(_req: NextRequest) {
+  return NextResponse.next()
+}
 
 export const config = {
-  // Adjust the matcher to protect specific routes like /dashboard
-  // For now, this is a general matcher excluding static files and API routes
-  matcher: [
-    '/dashboard/:path*', // Protect all routes under /dashboard
-    '/payment/:path*',   // Protect all routes under /payment (assuming it's for logged-in users)
-    // Add other specific paths that need protection here, for example:
-    // '/settings/:path*',
-    // '/profile/:path*'
-  ],
-};
+  matcher: ["/((?!api/|_next/|static/|favicon.ico).*)"],
+}

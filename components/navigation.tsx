@@ -2,17 +2,13 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Menu, X, Sparkles } from "lucide-react";
-import Link from "next/link";
-// import OnboardingModal from "./onboarding-modal"; // No longer needed with Civic AuthButton
-import AuthButton from "./AuthButton";
+import { Menu, X, Sparkles } from "lucide-react"
+import Link from "next/link"
+import AuthButton from "./AuthButton"
+import ChainSelector from "./chain-selector"
 
 export default function Navigation() {
-  const [isOpen, setIsOpen] = useState(false);
-  // const [showModal, setShowModal] = useState(false); // State for OnboardingModal, no longer needed
-  // const [modalType, setModalType] = useState<"login" | "register">("register"); // State for OnboardingModal, no longer needed
-
-  // handleGetStarted and handleLogin are no longer needed as AuthButton handles this
+  const [isOpen, setIsOpen] = useState(false)
 
   return (
     <>
@@ -36,35 +32,41 @@ export default function Navigation() {
                 className="text-gray-700 hover:text-blue-600 transition-colors font-medium relative group"
               >
                 Features
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300"></span>
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300" />
               </Link>
               <Link
                 href="/how-it-works"
                 className="text-gray-700 hover:text-blue-600 transition-colors font-medium relative group"
               >
                 How It Works
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300"></span>
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300" />
               </Link>
               <Link
                 href="/about"
                 className="text-gray-700 hover:text-blue-600 transition-colors font-medium relative group"
               >
                 About
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300"></span>
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300" />
               </Link>
               <Link
                 href="/dashboard"
                 className="text-gray-700 hover:text-blue-600 transition-colors font-medium relative group"
               >
                 Dashboard
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300"></span>
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 group-hover:w-full transition-all duration-300" />
               </Link>
+              <ChainSelector />
               <AuthButton />
             </div>
 
             {/* Mobile menu button */}
             <div className="md:hidden">
-              <Button variant="ghost" size="sm" onClick={() => setIsOpen(!isOpen)} className="text-gray-700">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsOpen(!isOpen)}
+                className="text-gray-700"
+              >
                 {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </Button>
             </div>
@@ -86,7 +88,10 @@ export default function Navigation() {
                 >
                   How It Works
                 </Link>
-                <Link href="/about" className="block text-gray-700 hover:text-blue-600 transition-colors font-medium">
+                <Link
+                  href="/about"
+                  className="block text-gray-700 hover:text-blue-600 transition-colors font-medium"
+                >
                   About
                 </Link>
                 <Link
@@ -95,7 +100,8 @@ export default function Navigation() {
                 >
                   Dashboard
                 </Link>
-                <div className="pt-4">
+                <div className="pt-4 flex items-center space-x-4">
+                  <ChainSelector />
                   <AuthButton />
                 </div>
               </div>
@@ -103,8 +109,6 @@ export default function Navigation() {
           )}
         </div>
       </nav>
-
-      {/* <OnboardingModal isOpen={showModal} onClose={() => setShowModal(false)} type={modalType} /> */}
     </>
   )
 }
