@@ -23,6 +23,8 @@ export default function PaymentLinksOverview({ compact = false }: PaymentLinksOv
       setLinks(json.links || [])
     }
     load()
+    const id = setInterval(load, 15000)
+    return () => clearInterval(id)
   }, [user])
 
   const totalEarnings = links.reduce((s, l) => s + (l.earnings || 0), 0)

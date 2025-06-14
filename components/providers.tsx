@@ -10,6 +10,7 @@ import { ConnectionProvider, WalletProvider } from "@solana/wallet-adapter-react
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui"
 import { CivicAuthProvider, useUser } from "@civic/auth-web3/react"
 import { userHasWallet } from "@civic/auth-web3"
+import { useRef } from "react"
 import { Toaster } from "@/components/ui/sonner"
 
 const queryClient = new QueryClient()
@@ -43,6 +44,22 @@ function AutoConnect() {
         console.error("Failed to create Civic Solana wallet", err),
       )
     }
+  }, [userContext])
+
+  const lastRegistered = useRef<string>()
+  useEffect(() => {
+    if (!userContext.user || !userHasWallet(userContext)) return
+    const addr = userContext.solana?.address
+    if (!addr || lastRegistered.current === addr) return
+    lastRegistered.current = addr
+    fetch("/api/wallet/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-user-id": userContext.user.id || userContext.user.email || "",
+      },
+      body: JSON.stringify({ address: addr, chain: "solana" }),
+    }).catch(() => {})
   }, [userContext])
 
   return null

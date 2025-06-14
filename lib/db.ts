@@ -187,3 +187,30 @@ export async function addNotification(
 
   return entry
 }
+
+export async function recordPayment(
+  linkId: string,
+  amount: number,
+  currency: string,
+  txHash: string,
+): Promise<Link | undefined> {
+  const links = await readLinks()
+  const idx = links.findIndex((l) => l.id === linkId)
+  if (idx === -1) return undefined
+  links[idx].earnings += amount
+  links[idx].transactions += 1
+  await writeLinks(links)
+  try {
+    await addNotification(links[idx].userId, {
+      type: "payment",
+      title: "New support received",
+      message: `You received ${amount} ${currency} (tx ${txHash.slice(
+        0,
+        10,
+      )}…)`,
+    })
+  } catch (err) {
+    console.error("payment notification failed", err)
+  }
+  return links[idx]
+}

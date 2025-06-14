@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import CopyButton from "@/components/copy-button"
 import QrCodeButton from "@/components/qr-code-button"
 import { Copy, QrCode, Lock } from "lucide-react"
+import SupportCreatorButton from "@/components/support-creator-button"
 import Link from "next/link"
 import { BASE_URL, ensureHttp } from "@/lib/utils"
 
@@ -53,12 +54,12 @@ export default async function PaymentLinkPage({
                 </div>
               )}
 
-              <Button
-                size="lg"
-                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 transition-transform hover:scale-105 text-lg"
-              >
-                Support&nbsp;Creator
-              </Button>
+              <SupportCreatorButton
+                linkId={link.id}
+                creatorId={link.userId}
+                amount={link.amount}
+                currency={link.currency}
+              />
             </>
           )}
 
