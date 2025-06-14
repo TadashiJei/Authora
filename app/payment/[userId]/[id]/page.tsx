@@ -6,7 +6,7 @@ import CopyButton from "@/components/copy-button"
 import QrCodeButton from "@/components/qr-code-button"
 import { Copy, QrCode, Lock } from "lucide-react"
 import Link from "next/link"
-import { ensureHttp } from "@/lib/utils"
+import { BASE_URL, ensureHttp } from "@/lib/utils"
 
 export default async function PaymentLinkPage({
   params,
@@ -87,7 +87,7 @@ export default async function PaymentLinkPage({
               Secure payments powered by <span className="font-semibold">Authora</span> • Civic&nbsp;Auth&nbsp;Wallets
             </p>
             <Link
-              href="https://authora.xyz"
+                href={BASE_URL}
               className="text-purple-600 hover:underline"
             >
               Learn more
