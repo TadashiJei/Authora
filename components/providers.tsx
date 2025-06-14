@@ -14,23 +14,27 @@ import { Toaster } from "@/components/ui/sonner"
 
 const queryClient = new QueryClient()
 
+/* ---------- RPC Endpoints ---------- */
+const SOLANA_RPC =
+  process.env.NEXT_PUBLIC_SOLANA_RPC_ENDPOINT ||
+  "https://api.mainnet-beta.solana.com"
+
+const ETHEREUM_RPC =
+  process.env.NEXT_PUBLIC_ETHEREUM_RPC_ENDPOINT ||
+  "https://eth.llamarpc.com"
+
+/* ---------- Wagmi ---------- */
 const wagmiConfig = createConfig({
   chains: [mainnet],
   transports: {
-    [mainnet.id]: http(),
+    [mainnet.id]: http(ETHEREUM_RPC),
   },
   connectors: [embeddedWallet()],
 })
 
-const SOLANA_RPC =
-  process.env.NEXT_PUBLIC_SOLANA_RPC_ENDPOINT ||
-  "https://api.mainnet-beta.solana.com"
-const CIVIC_CLIENT_ID = process.env.NEXT_PUBLIC_CIVIC_AUTH_CLIENT_ID || ""
-
 /* ---------- Auto‑connect helper ---------- */
 
 function AutoConnect() {
-  // EVM auto‑connect
   useAutoConnect()
 
   const userContext = useUser()
@@ -97,6 +101,8 @@ function useRedirectUrl() {
 
 export default function Providers({ children }: { children: ReactNode }) {
   const redirectUrl = useRedirectUrl()
+
+  const CIVIC_CLIENT_ID = process.env.NEXT_PUBLIC_CIVIC_AUTH_CLIENT_ID || ""
 
   return (
     <QueryClientProvider client={queryClient}>
