@@ -1,6 +1,11 @@
 "use client"
 
-import { useState, startTransition, useMemo } from "react"
+import {
+  useState,
+  useMemo,
+  useEffect,
+  startTransition,
+} from "react"
 import { Button } from "@/components/ui/button"
 import { toast } from "@/hooks/use-toast"
 import { useUser } from "@civic/auth-web3/react"
@@ -12,6 +17,13 @@ import { useAccount, useWalletClient, usePublicClient } from "wagmi"
 import { parseEther } from "viem"
 import { sendTransactionWithFallback } from "@/lib/solana"
 import { useWalletBalances } from "@/hooks/use-wallet-balances"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
 
 interface SupportCreatorButtonProps {
   linkId: string
@@ -24,30 +36,44 @@ export default function SupportCreatorButton({
   linkId,
   creatorId,
   amount,
-  currency = "SOL",
 }: SupportCreatorButtonProps) {
-  const [loading, setLoading] = useState(false)
+  /* ---------- Chain state ---------- */
+  const [selectedChain, setSelectedChain] = useState(
+    loadSelectedChain() || "solana",
+  )
 
-  /* ---------- Global chain context ---------- */
-  const selectedChain = loadSelectedChain() || "solana"
+  useEffect(() => {
+    const onChain = (e: Event) => {
+      const detail = (e as CustomEvent<string>).detail
+      setSelectedChain(detail || loadSelectedChain() || "solana")
+    }
+    window.addEventListener("authora.chainChanged", onChain)
+    window.addEventListener("storage", onChain)
+    return () => {
+      window.removeEventListener("authora.chainChanged", onChain)
+      window.removeEventListener("storage", onChain)
+    }
+  }, [])
+
   const isSolana = selectedChain === "solana"
+  const balanceSymbol = isSolana ? "SOL" : "ETH"
 
-  /* ---------- Civic Auth context ---------- */
+  /* ---------- Civic Auth ---------- */
   const userContext = useUser()
   const { user, signIn } = userContext
 
-  /* ---------- Wallet balance ---------- */
+  /* ---------- Wallet balances ---------- */
   const { balances } = useWalletBalances(selectedChain)
   const balanceInfo = useMemo(
-    () =>
-      balances.find((b) =>
-        isSolana ? b.symbol === "SOL" : b.symbol.toUpperCase() === "ETH",
-      ),
-    [balances, isSolana],
+    () => balances.find((b) => b.symbol.toUpperCase() === balanceSymbol),
+    [balances, balanceSymbol],
   )
-  const formattedBalance = balanceInfo
-    ? `${balanceInfo.formatted} ${balanceInfo.symbol}`
-    : "—"
+  const availableNative = balanceInfo
+    ? Number(balanceInfo.formatted.replace(/,/g, ""))
+    : 0
+  const formattedBalance = `${availableNative.toLocaleString(undefined, {
+    maximumFractionDigits: 6,
+  })} ${balanceSymbol}`
 
   /* ---------- Solana ---------- */
   const { connection } = useConnection()
@@ -57,82 +83,81 @@ export default function SupportCreatorButton({
   const { data: walletClient } = useWalletClient()
   const publicClient = usePublicClient()
 
+  /* ---------- UI state ---------- */
+  const [loading, setLoading] = useState(false)
+  const [errorOpen, setErrorOpen] = useState(false)
+  const [errorMessage, setErrorMessage] = useState("")
+
+  /* ---------- Helpers ---------- */
+  async function recordPayment(
+    amt: number,
+    curr: string,
+    txHash: string,
+    viaFallback: boolean,
+  ) {
+    await fetch(`/api/links/${linkId}/payment`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ amount: amt, currency: curr, txHash }),
+    })
+    toast({
+      title: "Thanks for your support!",
+      description: `Tx ${txHash.slice(0, 10)}…${viaFallback ? " (fallback RPC)" : ""}`,
+    })
+  }
+
   /* ---------- Click handler ---------- */
   const handleClick = async () => {
     if (loading) return
-
     try {
-      // Ensure user is authenticated
-      if (!user) {
-        await signIn()
-      }
+      if (!user) await signIn()
+      if (!userHasWallet(userContext)) await userContext.createWallet()
 
-      // Ensure embedded wallet exists
-      if (!userHasWallet(userContext)) {
-        await userContext.createWallet()
-      }
-
+      /* Fetch creator address */
       startTransition(() => setLoading(true))
-
-      /* ---------- Fetch creator address ---------- */
       const res = await fetch(
         `/api/wallet/${creatorId}?chain=${isSolana ? "solana" : "ethereum"}`,
       )
       if (!res.ok) {
         toast({ title: "Creator wallet not found" })
-        startTransition(() => setLoading(false))
         return
       }
       const { address: recipient } = await res.json()
 
-      /* ---------- Determine amount ---------- */
+      /* Determine amount */
       let amt = amount
       if (!amt) {
-        const promptLabel = isSolana
-          ? "Enter support amount (SOL)"
-          : "Enter support amount (ETH)"
-        const input = prompt(promptLabel)
-        if (!input) {
-          startTransition(() => setLoading(false))
-          return
-        }
+        const input = prompt(`Enter support amount (${balanceSymbol})`)
+        if (!input) return
         amt = Number(input)
       }
       if (!amt || isNaN(amt) || amt <= 0) {
         toast({ title: "Invalid amount" })
-        startTransition(() => setLoading(false))
         return
       }
 
-      /* ---------- Balance check ---------- */
+      /* Balance check */
+      if (availableNative < amt) {
+        setErrorMessage(
+          `You only have ${formattedBalance}. Please reduce the amount or fund your wallet first.`,
+        )
+        setErrorOpen(true)
+        return
+      }
+
+      /* ---------- Solana transfer ---------- */
       if (isSolana) {
-        const solCtx = (userContext as unknown as {
-          solana?: {
-            wallet: import("@solana/wallet-adapter-base").SignerWalletAdapter
-          }
-        }).solana
+        const solCtx = (userContext as any).solana
         if (!solCtx?.wallet) {
           toast({ title: "Wallet unavailable" })
-          startTransition(() => setLoading(false))
           return
         }
-
-        const lamportsNeeded = Math.round(amt * 1_000_000_000)
-        const balanceLamports = await connection.getBalance(
-          solCtx.wallet.publicKey as PublicKey,
-        )
-        if (balanceLamports < lamportsNeeded) {
-          toast({ title: "Insufficient balance" })
-          startTransition(() => setLoading(false))
-          return
-        }
-
-        /* ---------- Transfer ---------- */
+        const lamports = Math.round(amt * 1_000_000_000)
         const tx = new Transaction().add(
           SystemProgram.transfer({
             fromPubkey: solCtx.wallet.publicKey as PublicKey,
             toPubkey: new PublicKey(recipient),
-            lamports: lamportsNeeded,
+            lamports,
           }),
         )
         const { signature, usedFallback } = await sendTransactionWithFallback(
@@ -140,35 +165,19 @@ export default function SupportCreatorButton({
           tx,
           connection,
         )
-
-        await recordPaymentAndToast(
-          amt,
-          currency || "SOL",
-          signature,
-          usedFallback,
-        )
+        await recordPayment(amt, "SOL", signature, usedFallback)
       } else {
+        /* ---------- EVM transfer ---------- */
         if (!publicClient || !walletClient || !evmAddress) {
           toast({ title: "Wallet not connected" })
-          startTransition(() => setLoading(false))
           return
         }
-
-        const balanceWei = await publicClient.getBalance({ address: evmAddress })
-        const requiredWei = parseEther(amt.toString())
-        if (balanceWei < requiredWei) {
-          toast({ title: "Insufficient balance" })
-          startTransition(() => setLoading(false))
-          return
-        }
-
         const txHash = await walletClient.sendTransaction({
           account: evmAddress,
           to: recipient,
-          value: requiredWei,
+          value: parseEther(amt.toString()),
         })
-
-        await recordPaymentAndToast(amt, currency || "ETH", txHash, false)
+        await recordPayment(amt, "ETH", txHash, false)
       }
     } catch (err) {
       console.error(err)
@@ -178,34 +187,22 @@ export default function SupportCreatorButton({
     }
   }
 
-  /* ---------- Helper ---------- */
-  async function recordPaymentAndToast(
-    amt: number,
-    curr: string,
-    txHash: string,
-    usedFallback: boolean,
-  ) {
-    await fetch(`/api/links/${linkId}/payment`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        amount: amt,
-        currency: curr,
-        txHash,
-      }),
-    })
-
-    toast({
-      title: "Thanks for your support!",
-      description: `Transaction ${txHash.slice(0, 10)}…${
-        usedFallback ? " (fallback RPC)" : ""
-      }`,
-    })
-  }
-
-  /* ---------- UI ---------- */
+  /* ---------- Render ---------- */
   return (
     <>
+      {/* Error dialog */}
+      <Dialog open={errorOpen} onOpenChange={setErrorOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Insufficient Balance</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-gray-600">{errorMessage}</p>
+          <DialogFooter>
+            <Button onClick={() => setErrorOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Button
         size="lg"
         disabled={loading}

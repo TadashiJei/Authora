@@ -2,8 +2,8 @@
 
 import { ReactNode, useMemo, useEffect, useRef } from "react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { WagmiProvider, createConfig, useAccount } from "wagmi"
-import { embeddedWallet, useAutoConnect } from "@civic/auth-web3/wagmi"
+import { WagmiProvider, createConfig, useAccount, useConnect } from "wagmi"
+import { embeddedWallet } from "@civic/auth-web3/wagmi"
 import { http } from "viem"
 import { mainnet } from "viem/chains"
 import { ConnectionProvider, WalletProvider } from "@solana/wallet-adapter-react"
@@ -33,25 +33,34 @@ const wagmiConfig = createConfig({
 })
 
 /* ---------- Auto‑connect helper ---------- */
-
 function AutoConnect() {
-  useAutoConnect()
-
   const userContext = useUser()
-  const { address: evmAddress } = useAccount()
+  const { connectors, connect } = useConnect()
+  const { isConnected } = useAccount()
 
-  /* Create Solana wallet if missing */
+  /* Create wallet if missing */
   useEffect(() => {
     if (!userContext.user) return
     if (!userHasWallet(userContext) && !(userContext as any).walletCreationInProgress) {
       userContext.createWallet().catch((err: unknown) =>
-        console.error("Failed to create Civic Solana wallet", err),
+        console.error("Failed to create Civic wallet", err),
       )
     }
   }, [userContext])
 
-  /* Register wallets */
+  /* Connect EVM wallet once created */
+  useEffect(() => {
+    if (!userContext.user || !userHasWallet(userContext) || isConnected) return
+    const civic = connectors.find((c) => c.id === "civic" || c.name === "Civic")
+    if (civic) {
+      connect({ connector: civic })
+    }
+  }, [userContext, connectors, connect, isConnected])
+
+  /* Register wallet addresses (debounced) */
+  const { address: evmAddress } = useAccount()
   const lastRegistered = useRef<{ solana?: string; ethereum?: string }>({})
+
   useEffect(() => {
     if (!userContext.user || !userHasWallet(userContext)) return
 
@@ -85,8 +94,7 @@ function AutoConnect() {
   return null
 }
 
-/* ---------- Helper to compute redirect URL ---------- */
-
+/* ---------- Redirect helper ---------- */
 function useRedirectUrl() {
   return useMemo(() => {
     if (process.env.NEXT_PUBLIC_CIVIC_AUTH_REDIRECT_URI) {
@@ -101,7 +109,6 @@ function useRedirectUrl() {
 
 export default function Providers({ children }: { children: ReactNode }) {
   const redirectUrl = useRedirectUrl()
-
   const CIVIC_CLIENT_ID = process.env.NEXT_PUBLIC_CIVIC_AUTH_CLIENT_ID || ""
 
   return (

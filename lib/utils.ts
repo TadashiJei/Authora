@@ -2,16 +2,12 @@ import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { BrowserQRCodeReader } from "@zxing/browser"
 
-/**
- * Tailwind class names merger.
- */
+/* ---------- Tailwind helper ---------- */
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-/**
- * Site base URL and host helpers.
- */
+/* ---------- Base‑URL helpers ---------- */
 export const BASE_URL =
   process.env.NEXT_PUBLIC_BASE_URL ||
   (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000")
@@ -24,9 +20,7 @@ export const SITE_DOMAIN = (() => {
   }
 })()
 
-/**
- * Decode a QR code from an image file and return the embedded text.
- */
+/* ---------- QR‑code ---------- */
 export async function decodeQrFromImage(file: File): Promise<string | null> {
   const reader = new BrowserQRCodeReader()
   try {
@@ -40,17 +34,13 @@ export async function decodeQrFromImage(file: File): Promise<string | null> {
   }
 }
 
-/**
- * Copy arbitrary text to the clipboard.
- * Returns true on success, false otherwise.
- */
+/* ---------- Clipboard ---------- */
 export async function copyText(value: string): Promise<boolean> {
   try {
     if (navigator?.clipboard?.writeText) {
       await navigator.clipboard.writeText(value)
       return true
     }
-    // Fallback for very old browsers
     const textarea = document.createElement("textarea")
     textarea.value = value
     textarea.style.position = "fixed"
@@ -67,38 +57,31 @@ export async function copyText(value: string): Promise<boolean> {
   }
 }
 
-/**
- * Key under which the user's currently selected chain is persisted.
- */
+/* ---------- Chain persistence ---------- */
 export const SELECTED_CHAIN_KEY = "authora.selectedChain"
 
-/** Persist selected chain to localStorage */
-export function saveSelectedChain(id: string) {
+export function saveSelectedChain(id: string | null) {
   try {
-    localStorage.setItem(SELECTED_CHAIN_KEY, id)
+    if (id && id.length > 0) {
+      localStorage.setItem(SELECTED_CHAIN_KEY, id)
+    } else {
+      localStorage.removeItem(SELECTED_CHAIN_KEY)
+    }
   } catch {}
 }
 
-/** Load selected chain from localStorage */
 export function loadSelectedChain(): string | null {
   try {
-    return localStorage.getItem(SELECTED_CHAIN_KEY)
+    const val = localStorage.getItem(SELECTED_CHAIN_KEY)
+    return val && val.length > 0 ? val : null
   } catch {
     return null
   }
 }
 
-/**
- * Export a 2‑D string array to CSV and trigger browser download.
- */
+/* ---------- CSV export ---------- */
 export function exportCsv(filename: string, rows: string[][]) {
-  const csv = rows
-    .map((r) =>
-      r
-        .map((v) => `"${v.replace(/"/g, '""')}"`)
-        .join(","),
-    )
-    .join("\n")
+  const csv = rows.map((r) => r.map((v) => `"${v.replace(/"/g, '""')}"`).join(",")).join("\n")
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
   const url = URL.createObjectURL(blob)
   const link = document.createElement("a")
@@ -110,17 +93,12 @@ export function exportCsv(filename: string, rows: string[][]) {
   URL.revokeObjectURL(url)
 }
 
-/**
- * Ensure a string is a fully‑qualified HTTP(S) URL; if scheme is missing, prepend https://.
- */
+/* ---------- Misc ---------- */
 export function ensureHttp(url: string): string {
   if (!url) return url
   return /^https?:\/\//i.test(url) ? url : `https://${url.replace(/^\/+/, "")}`
 }
 
-/**
- * Build common JSON headers and optionally append x-user-id when a Civic user is present.
- */
 export function buildAuthHeaders(
   user: { id?: string | null; email?: string | null } | null | undefined,
 ): Record<string, string> {

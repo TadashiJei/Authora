@@ -36,6 +36,15 @@ const CHAINS: readonly (EvmChain | SolanaChain)[] = [
   SOLANA_CHAIN,
 ]
 
+/** Dispatch a global custom event when the active chain changes. */
+function broadcastChain(val: string) {
+  try {
+    window.dispatchEvent(
+      new CustomEvent("authora.chainChanged", { detail: val }),
+    )
+  } catch {}
+}
+
 export default function ChainSelector() {
   const { chain } = useAccount()
   const { switchChain, isPending: switching } = useSwitchChain()
@@ -45,7 +54,6 @@ export default function ChainSelector() {
   const searchParams = useSearchParams()
 
   /* ---------- Determine current chain ---------- */
-
   const queryChain = searchParams.get("chain") ?? loadSelectedChain()
 
   const current = useMemo(() => {
@@ -53,47 +61,58 @@ export default function ChainSelector() {
     return EVM_CHAINS.find((c) => c.id === chain?.id) ?? EVM_CHAINS[0]
   }, [chain?.id, queryChain])
 
-  /* ---------- Sync URL query + localStorage ---------- */
-
+  /* ---------- Helpers ---------- */
   const setQuery = useCallback(
     (val: string | null) => {
       const p = new URLSearchParams(searchParams.toString())
       if (val) p.set("chain", val)
       else p.delete("chain")
-      saveSelectedChain(val ?? "")
       router.replace(`${pathname}?${p.toString()}`)
+
+      if (val !== null) {
+        saveSelectedChain(val)
+        broadcastChain(val)
+      } else {
+        saveSelectedChain("ethereum")
+        broadcastChain("ethereum")
+      }
     },
     [pathname, router, searchParams],
   )
 
   /* ---------- Handle selection ---------- */
-
   const handleSelect = (selected: EvmChain | SolanaChain) => {
     if (selected.id === "solana") {
       disconnect()
       setQuery("solana")
       return
     }
-    if (queryChain === "solana") setQuery(null)
     if (selected.id !== chain?.id) {
       switchChain({ chainId: selected.id })
     }
+    setQuery(null)
   }
 
-  /* ---------- Ensure initial localStorage value reflected in URL ---------- */
-
+  /* ---------- Sync localStorage and URL on mount ---------- */
   useEffect(() => {
-    if (queryChain && !searchParams.get("chain")) {
-      setQuery(queryChain)
+    if (queryChain && !searchParams.get("chain") && queryChain !== "solana") {
+      return
     }
-  }, [queryChain, searchParams, setQuery])
+    if (!queryChain && searchParams.get("chain") === "solana") {
+      saveSelectedChain("solana")
+      broadcastChain("solana")
+    }
+  }, [queryChain, searchParams])
 
   /* ---------- UI ---------- */
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="flex items-center space-x-1">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="flex items-center space-x-1"
+        >
           <span className="font-medium truncate">{current.short}</span>
           <ChevronDown className="w-4 h-4" />
         </Button>
@@ -101,7 +120,7 @@ export default function ChainSelector() {
       <DropdownMenuContent align="end">
         {CHAINS.map((c) => (
           <DropdownMenuItem
-            key={c.id}
+            key={String(c.id)}
             onSelect={() => handleSelect(c)}
             disabled={switching || c.id === current.id}
             className="cursor-pointer data-[disabled]:opacity-50"
