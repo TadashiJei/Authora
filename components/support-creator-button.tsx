@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect, startTransition } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { toast } from "@/hooks/use-toast"
 import { useUser } from "@civic/auth-web3/react"
@@ -121,7 +121,7 @@ export default function SupportCreatorButton({
       if (!userHasWallet(userContext)) await userContext.createWallet()
 
       /* Fetch creator address */
-      startTransition(() => setLoading(true))
+      setLoading(true)
       const res = await fetch(
         `/api/wallet/${creatorId}?chain=${isSolana ? "solana" : "ethereum"}`,
       )
@@ -190,7 +190,7 @@ export default function SupportCreatorButton({
       console.error(err)
       toast({ title: "Payment failed" })
     } finally {
-      startTransition(() => setLoading(false))
+      setLoading(false)
     }
   }
 

@@ -109,7 +109,7 @@ function useRedirectUrl() {
 
 export default function Providers({ children }: { children: ReactNode }) {
   const redirectUrl = useRedirectUrl()
-  const CIVIC_CLIENT_ID = process.env.NEXT_PUBLIC_CIVIC_AUTH_CLIENT_ID || ""
+  const CIVIC_CLIENT_ID = process.env.NEXT_PUBLIC_CIVIC_CLIENT_ID || ""
 
   return (
     <QueryClientProvider client={queryClient}>
