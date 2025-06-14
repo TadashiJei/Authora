@@ -1,11 +1,6 @@
 "use client"
 
-import {
-  useState,
-  useMemo,
-  useEffect,
-  startTransition,
-} from "react"
+import { useState, useMemo, useEffect, startTransition } from "react"
 import { Button } from "@/components/ui/button"
 import { toast } from "@/hooks/use-toast"
 import { useUser } from "@civic/auth-web3/react"
@@ -38,14 +33,26 @@ export default function SupportCreatorButton({
   amount,
 }: SupportCreatorButtonProps) {
   /* ---------- Chain state ---------- */
-  const [selectedChain, setSelectedChain] = useState(
-    loadSelectedChain() || "solana",
+  // Always start with 'solana' to keep server and client HTML identical.
+  const [selectedChain, setSelectedChain] = useState<"solana" | "ethereum">(
+    "solana",
   )
 
+  // After mount, sync with saved preference (client‑only).
+  useEffect(() => {
+    const stored = loadSelectedChain()
+    if (stored === "solana" || stored === "ethereum") {
+      setSelectedChain(stored)
+    }
+  }, [])
+
+  // Listen for runtime chain changes.
   useEffect(() => {
     const onChain = (e: Event) => {
       const detail = (e as CustomEvent<string>).detail
-      setSelectedChain(detail || loadSelectedChain() || "solana")
+      if (detail === "solana" || detail === "ethereum") {
+        setSelectedChain(detail)
+      }
     }
     window.addEventListener("authora.chainChanged", onChain)
     window.addEventListener("storage", onChain)
