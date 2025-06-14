@@ -1,7 +1,11 @@
 import { getLink } from "@/lib/db"
 import { notFound } from "next/navigation"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import CopyButton from "@/components/copy-button"
 import QrCodeButton from "@/components/qr-code-button"
 import { Copy, QrCode, Lock } from "lucide-react"
@@ -10,11 +14,13 @@ import Link from "next/link"
 import { BASE_URL, ensureHttp } from "@/lib/utils"
 
 export default async function PaymentLinkPage({
-  params,
+  params: paramsPromise,
 }: {
-  params: { userId: string; id: string }
+  params: Promise<{ userId: string; id: string }>
 }) {
-  const link = await getLink(params.userId, params.id)
+  const { userId, id } = await paramsPromise
+
+  const link = await getLink(userId, id)
   if (!link) notFound()
 
   const linkUrl = ensureHttp(link.url)
@@ -87,10 +93,7 @@ export default async function PaymentLinkPage({
             <p>
               Secure payments powered by <span className="font-semibold">Authora</span> • Civic&nbsp;Auth&nbsp;Wallets
             </p>
-            <Link
-                href={BASE_URL}
-              className="text-purple-600 hover:underline"
-            >
+            <Link href={BASE_URL} className="text-purple-600 hover:underline">
               Learn more
             </Link>
           </div>

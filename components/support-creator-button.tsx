@@ -1,12 +1,16 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { toast } from "@/hooks/use-toast"
 import { useUser } from "@civic/auth-web3/react"
 import { userHasWallet } from "@civic/auth-web3"
 import { useConnection } from "@solana/wallet-adapter-react"
 import { PublicKey, SystemProgram, Transaction } from "@solana/web3.js"
+import { loadSelectedChain } from "@/lib/utils"
+import { useAccount, useWalletClient } from "wagmi"
+import { parseEther } from "viem"
+import { sendTransactionWithFallback } from "@/lib/solana"
 
 interface SupportCreatorButtonProps {
   linkId: string
@@ -22,70 +26,128 @@ export default function SupportCreatorButton({
   currency = "SOL",
 }: SupportCreatorButtonProps) {
   const [loading, setLoading] = useState(false)
-  const { user, signIn } = useUser()
+
+  /* ---------- Civic Auth context ---------- */
   const userContext = useUser()
+  const { user, signIn } = userContext
+
+  /* ---------- Active chain ---------- */
+  const selectedChain = useMemo(() => loadSelectedChain() || "solana", [])
+  const isSolana = selectedChain === "solana"
+
+  /* ---------- Solana ---------- */
   const { connection } = useConnection()
 
+  /* ---------- EVM ---------- */
+  const { address: evmAddress } = useAccount()
+  const { data: walletClient } = useWalletClient()
+
+  /* ---------- Click handler ---------- */
   const handleClick = async () => {
     try {
       setLoading(true)
 
+      // Auth and wallet setup
       if (!user) {
         await signIn()
       }
-
       if (!userHasWallet(userContext)) {
         await userContext.createWallet()
       }
 
-      const wallet = userContext.solana?.wallet
-      if (!wallet) {
-        toast({ title: "Wallet unavailable" })
-        return
-      }
-
-      const res = await fetch(`/api/wallet/${creatorId}`)
+      // Fetch creator address
+      const res = await fetch(
+        `/api/wallet/${creatorId}?chain=${isSolana ? "solana" : "ethereum"}`,
+      )
       if (!res.ok) {
         toast({ title: "Creator wallet not found" })
+        setLoading(false)
         return
       }
       const { address: recipient } = await res.json()
 
+      // Determine amount
       let amt = amount
       if (!amt) {
-        const input = prompt("Enter support amount (SOL)")
+        const promptLabel = isSolana
+          ? "Enter support amount (SOL)"
+          : "Enter support amount (ETH)"
+        const input = prompt(promptLabel)
         if (!input) {
           setLoading(false)
           return
         }
         amt = Number(input)
-        if (isNaN(amt) || amt <= 0) {
-          toast({ title: "Invalid amount" })
+      }
+      if (!amt || isNaN(amt) || amt <= 0) {
+        toast({ title: "Invalid amount" })
+        setLoading(false)
+        return
+      }
+
+      // Execute transfer
+      let txHash: string | undefined
+      let usedFallback = false
+
+      if (isSolana) {
+        if (!userHasWallet(userContext)) {
+          toast({ title: "Wallet unavailable" })
           setLoading(false)
           return
         }
+        const solCtx = (userContext as unknown as { solana?: { wallet: import("@solana/wallet-adapter-base").SignerWalletAdapter } }).solana
+        if (!solCtx?.wallet) {
+          toast({ title: "Wallet unavailable" })
+          setLoading(false)
+          return
+        }
+
+        const lamports = Math.round(amt * 1_000_000_000)
+        const tx = new Transaction().add(
+          SystemProgram.transfer({
+            fromPubkey: solCtx.wallet.publicKey as PublicKey,
+            toPubkey: new PublicKey(recipient),
+            lamports,
+          }),
+        )
+
+        const result = await sendTransactionWithFallback(
+          solCtx.wallet,
+          tx,
+          connection,
+        )
+        txHash = result.signature
+        usedFallback = result.usedFallback
+      } else {
+        if (!walletClient || !evmAddress) {
+          toast({ title: "Wallet not connected" })
+          setLoading(false)
+          return
+        }
+
+        txHash = await walletClient.sendTransaction({
+          account: evmAddress,
+          to: recipient,
+          value: parseEther(amt.toString()),
+        })
       }
 
-      const lamports = Math.round(amt * 1_000_000_000)
-      const tx = new Transaction().add(
-        SystemProgram.transfer({
-          fromPubkey: wallet.publicKey,
-          toPubkey: new PublicKey(recipient),
-          lamports,
-        }),
-      )
-      const sig = await wallet.sendTransaction(tx, connection)
-      await connection.confirmTransaction(sig, "confirmed")
-
+      // Persist payment
       await fetch(`/api/links/${linkId}/payment`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: amt, currency, txHash: sig }),
+        body: JSON.stringify({
+          amount: amt,
+          currency: currency || (isSolana ? "SOL" : "ETH"),
+          txHash,
+        }),
       })
 
       toast({
         title: "Thanks for your support!",
-        description: `Transaction ${sig.slice(0, 10)}…`,
+        description: `Transaction ${txHash?.slice(0, 10)}…${
+          usedFallback ? " (fallback RPC)" : ""
+        }`,
       })
     } catch (err) {
       console.error(err)

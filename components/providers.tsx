@@ -1,8 +1,8 @@
 'use client'
 
-import { ReactNode, useMemo, useEffect } from "react"
+import { ReactNode, useMemo, useEffect, useRef } from "react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { WagmiProvider, createConfig } from "wagmi"
+import { WagmiProvider, createConfig, useAccount } from "wagmi"
 import { embeddedWallet, useAutoConnect } from "@civic/auth-web3/wagmi"
 import { http } from "viem"
 import { mainnet } from "viem/chains"
@@ -10,7 +10,6 @@ import { ConnectionProvider, WalletProvider } from "@solana/wallet-adapter-react
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui"
 import { CivicAuthProvider, useUser } from "@civic/auth-web3/react"
 import { userHasWallet } from "@civic/auth-web3"
-import { useRef } from "react"
 import { Toaster } from "@/components/ui/sonner"
 
 const queryClient = new QueryClient()
@@ -28,15 +27,16 @@ const SOLANA_RPC =
   "https://api.mainnet-beta.solana.com"
 const CIVIC_CLIENT_ID = process.env.NEXT_PUBLIC_CIVIC_AUTH_CLIENT_ID || ""
 
-/* ---------- Auto‑connect helper (must live inside providers) ---------- */
+/* ---------- Auto‑connect helper ---------- */
 
 function AutoConnect() {
-  // EVM: automatically creates & connects the embedded wallet when possible.
+  // EVM auto‑connect
   useAutoConnect()
 
-  // Solana: create the embedded wallet if missing, then wallet‑adapter will auto‑connect.
   const userContext = useUser()
+  const { address: evmAddress } = useAccount()
 
+  /* Create Solana wallet if missing */
   useEffect(() => {
     if (!userContext.user) return
     if (!userHasWallet(userContext) && !(userContext as any).walletCreationInProgress) {
@@ -46,26 +46,42 @@ function AutoConnect() {
     }
   }, [userContext])
 
-  const lastRegistered = useRef<string>()
+  /* Register wallets */
+  const lastRegistered = useRef<{ solana?: string; ethereum?: string }>({})
   useEffect(() => {
     if (!userContext.user || !userHasWallet(userContext)) return
-    const addr = userContext.solana?.address
-    if (!addr || lastRegistered.current === addr) return
-    lastRegistered.current = addr
-    fetch("/api/wallet/register", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-user-id": userContext.user.id || userContext.user.email || "",
-      },
-      body: JSON.stringify({ address: addr, chain: "solana" }),
-    }).catch(() => {})
-  }, [userContext])
+
+    const headers = {
+      "Content-Type": "application/json",
+      "x-user-id": userContext.user.id || userContext.user.email || "",
+    }
+
+    // Solana
+    const solAddr = userContext.solana?.address
+    if (solAddr && lastRegistered.current.solana !== solAddr) {
+      lastRegistered.current.solana = solAddr
+      fetch("/api/wallet/register", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ address: solAddr, chain: "solana" }),
+      }).catch(() => {})
+    }
+
+    // Ethereum
+    if (evmAddress && lastRegistered.current.ethereum !== evmAddress) {
+      lastRegistered.current.ethereum = evmAddress
+      fetch("/api/wallet/register", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ address: evmAddress, chain: "ethereum" }),
+      }).catch(() => {})
+    }
+  }, [userContext, evmAddress])
 
   return null
 }
 
-/* ---------- Redirect URL helper ---------- */
+/* ---------- Helper to compute redirect URL ---------- */
 
 function useRedirectUrl() {
   return useMemo(() => {

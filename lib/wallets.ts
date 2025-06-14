@@ -22,11 +22,30 @@ async function ensureFile() {
 async function readAll(): Promise<WalletEntry[]> {
   await ensureFile()
   const raw = await fs.readFile(walletsFile, "utf8")
-  return JSON.parse(raw) as WalletEntry[]
+  if (!raw.trim()) return []
+  try {
+    return JSON.parse(raw) as WalletEntry[]
+  } catch (err) {
+    console.error("wallets.json corrupted – backing up and resetting", err)
+    try {
+      const backup = `${walletsFile}.${Date.now()}.bak`
+      await fs.writeFile(backup, raw)
+    } catch {}
+    await fs.writeFile(walletsFile, "[]")
+    return []
+  }
 }
 
+// Serialise writes to prevent concurrent corruption
+let writeChain: Promise<void> = Promise.resolve()
+
 async function writeAll(entries: WalletEntry[]) {
-  await fs.writeFile(walletsFile, JSON.stringify(entries, null, 2))
+  writeChain = writeChain.then(async () => {
+    const tmp = `${walletsFile}.tmp`
+    await fs.writeFile(tmp, JSON.stringify(entries, null, 2))
+    await fs.rename(tmp, walletsFile)
+  })
+  return writeChain
 }
 
 export async function getWalletByUser(
