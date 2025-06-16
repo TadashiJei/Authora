@@ -50,8 +50,14 @@ export function useWalletBalances(selectedChain?: string | null) {
       ? userContext.solana?.address
       : undefined
 
-  /* ----- Ethereum via wagmi ----- */
-  const { address: evmAddress } = useAccount()
+  /* ----- Ethereum via wagmi or Civic embedded wallet ----- */
+  const { address: evmAccountAddr } = useAccount()
+  const evmCivicAddr =
+    !isSolana && userHasWallet(userContext)
+      ? (userContext as any).ethereum?.address
+      : undefined
+  const evmAddress = (evmAccountAddr || evmCivicAddr) as string | undefined
+
   const { data: evmBalance } = useBalance({
     address: evmAddress,
     unit: "ether",
@@ -142,9 +148,7 @@ export function useWalletBalances(selectedChain?: string | null) {
 
   const totalUsd = balances.reduce((s, b) => s + (b.valueUsd || 0), 0)
 
-  const address = isSolana
-    ? solAddressFromUser
-    : evmAddress || solAddressFromUser
+  const address = isSolana ? solAddressFromUser : evmAddress
 
   return {
     address,

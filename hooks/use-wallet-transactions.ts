@@ -60,10 +60,17 @@ export function useWalletTransactions(selectedChain?: string | null) {
   const effectiveChain = selectedChain ?? loadSelectedChain()
   const isSolana = effectiveChain === "solana"
 
-  const { address: evmAddress } = useAccount()
+  const { address: evmAccountAddr } = useAccount()
   const { connection } = useConnection()
 
   const userContext = useUser()
+
+  const evmCivicAddr =
+    !isSolana && userHasWallet(userContext)
+      ? (userContext as any).ethereum?.address
+      : undefined
+  const evmAddress = (evmAccountAddr || evmCivicAddr) as string | undefined
+
   const solAddress =
     isSolana && userHasWallet(userContext)
       ? userContext.solana?.address
