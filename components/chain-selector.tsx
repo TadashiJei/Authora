@@ -13,22 +13,27 @@ import { useAccount, useDisconnect, useSwitchChain } from "wagmi"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { mainnet } from "viem/chains"
 import {
-  SELECTED_CHAIN_KEY,
   saveSelectedChain,
   loadSelectedChain,
 } from "@/lib/utils"
 
-type EvmChain = { id: number; name: string; short: string }
-type SolanaChain = { id: "solana"; name: string; short: string }
+type EvmChain = { id: number; name: string; short: string; logo: string }
+type SolanaChain = { id: "solana"; name: string; short: string; logo: string }
 
 const EVM_CHAINS: readonly EvmChain[] = [
-  { id: mainnet.id, name: "Ethereum", short: "ETH" },
+  {
+    id: mainnet.id,
+    name: "Ethereum",
+    short: "ETH",
+    logo: "/chains/ethereum-logo.svg",
+  },
 ]
 
 const SOLANA_CHAIN: SolanaChain = {
   id: "solana",
   name: "Solana",
   short: "SOL",
+  logo: "/chains/solana-logo.svg",
 }
 
 const CHAINS: readonly (EvmChain | SolanaChain)[] = [
@@ -56,9 +61,11 @@ export default function ChainSelector() {
   /* ---------- Determine current chain ---------- */
   const queryChain = searchParams.get("chain") ?? loadSelectedChain()
 
-  const current = useMemo(() => {
+  const current = useMemo<(EvmChain | SolanaChain)>(() => {
     if (queryChain === "solana") return SOLANA_CHAIN
-    return EVM_CHAINS.find((c) => c.id === chain?.id) ?? EVM_CHAINS[0]
+    return (
+      EVM_CHAINS.find((c) => c.id === chain?.id) ?? EVM_CHAINS[0]
+    )
   }, [chain?.id, queryChain])
 
   /* ---------- Helpers ---------- */
@@ -113,8 +120,13 @@ export default function ChainSelector() {
           size="sm"
           className="flex items-center space-x-1"
         >
+          <img
+            src={current.logo}
+            alt={current.name}
+            className="w-4 h-4 mr-1"
+          />
           <span className="font-medium truncate">{current.short}</span>
-          <ChevronDown className="w-4 h-4" />
+          <ChevronDown className="w-4 h-4 ml-1" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -123,8 +135,13 @@ export default function ChainSelector() {
             key={String(c.id)}
             onSelect={() => handleSelect(c)}
             disabled={switching || c.id === current.id}
-            className="cursor-pointer data-[disabled]:opacity-50"
+            className="cursor-pointer data-[disabled]:opacity-50 flex items-center"
           >
+            <img
+              src={c.logo}
+              alt={c.name}
+              className="w-4 h-4 mr-2"
+            />
             {c.name}
           </DropdownMenuItem>
         ))}
